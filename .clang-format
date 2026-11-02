@@ -1,0 +1,31 @@
+---
+# C/C++ formatting rules for canvas-host.
+BasedOnStyle: LLVM
+Language: Cpp
+Standard: c++17
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 100
+AccessModifierOffset: -4
+BreakBeforeBraces: Allman
+BraceWrapping:
+  AfterExternBlock: false
+IndentExternBlock: NoIndent
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortLoopsOnASingleLine: false
+NamespaceIndentation: None
+IndentCaseLabels: false
+PointerAlignment: Left
+ReferenceAlignment: Left
+BinPackArguments: false
+BinPackParameters: false
+BreakConstructorInitializers: BeforeComma
+ContinuationIndentWidth: 4
+BreakBeforeBinaryOperators: None
+SortIncludes: Never
+IncludeBlocks: Preserve
+PenaltyReturnTypeOnItsOwnLine: 1000
+...

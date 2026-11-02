@@ -1,0 +1,53 @@
+# Recipe for the canvas-host wasm package used by the JupyterLite example.
+
+context:
+  version: "0.1.0"
+
+package:
+  name: canvas-host
+  version: ${{ version }}
+
+source:
+  path: ../../../..
+
+build:
+  number: 0
+  script: build.sh
+
+requirements:
+  build:
+    - cmake
+    - make
+    - nodejs
+    - emscripten_emscripten-wasm32 ==4.0.9
+  host:
+    - xeus
+    - nlohmann_json
+  run:
+    - xeus
+    - nlohmann_json
+
+tests:
+  - package_contents:
+      files:
+        - include/canvas_host/canvas_host.h
+        - include/canvas_host/canvas_host.hpp
+        - include/canvas_host/version.h
+        - lib/libcanvas_host_c.a
+        - lib/libcanvas_host_c.so
+
+about:
+  license: BSD-3-Clause
+  license_family: BSD-3
+  license_file: LICENSE
+  homepage: https://github.com/Alex-PLACET/canvas-host
+  repository: https://github.com/Alex-PLACET/canvas-host
+  summary: Backend-agnostic canvas host for xeus-cpp and JupyterLite
+  description: |
+    canvas-host provides browser-side canvas lifecycle management, WebGL2
+    context creation, OffscreenCanvas transfer, and normalized input events for
+    xeus-cpp notebooks.
+
+extra:
+  recipe-maintainers:
+    - Alex-PLACET

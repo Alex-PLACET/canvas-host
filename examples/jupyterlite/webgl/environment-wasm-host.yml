@@ -1,0 +1,18 @@
+# wasm dependencies installed into the xeus-cpp kernel prefix.
+
+name: canvas-host-wasm-host
+channels:
+  - https://prefix.dev/emscripten-forge-4x
+  - https://prefix.dev/conda-forge
+dependencies:
+  # Direct CMake requirements of xeus-cpp.
+  - xeus
+  - xeus-lite
+  - cppinterop>=1.9
+  - cpp-argparse
+  - pugixml
+  - nlohmann_json
+  # Keeps the nlohmann ABI aligned with xeus.
+  - nlohmann_json-abi
+  # Built by build_kernel.sh from the local recipe and channel.
+  - canvas-host

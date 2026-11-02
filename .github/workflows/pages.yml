@@ -1,0 +1,78 @@
+# Build the JupyterLite WebGL example and deploy it to GitHub Pages.
+
+name: Pages
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "examples/jupyterlite/webgl/**"
+      - "include/**"
+      - "src/**"
+      - "js/**"
+      - "cmake/**"
+      - "CMakeLists.txt"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v7
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          micromamba-version: latest
+          init-shell: bash
+      - name: Cache wasm environments and xeus-cpp source
+        uses: actions/cache@v4
+        with:
+          path: |
+            examples/jupyterlite/webgl/.deps/wasm-build
+            examples/jupyterlite/webgl/.deps/wasm-host
+            examples/jupyterlite/webgl/.deps/xeus-cpp
+            examples/jupyterlite/webgl/.deps/rattler-cache
+          key: pages-wasm-${{ runner.os }}-${{ hashFiles('examples/jupyterlite/webgl/environment*.yml', 'examples/jupyterlite/webgl/build_kernel.sh') }}
+      - name: Create JupyterLite environment
+        shell: bash -el {0}
+        run: |
+          if [[ ! -d examples/jupyterlite/webgl/.deps/jupyterlite ]]; then
+            micromamba create -y \
+              -p "$PWD/examples/jupyterlite/webgl/.deps/jupyterlite" \
+              -f examples/jupyterlite/webgl/environment.yml
+          fi
+      - name: Build xeus-cpp and canvas-host
+        shell: bash -el {0}
+        working-directory: examples/jupyterlite/webgl
+        run: ./build_kernel.sh
+      - name: Build JupyterLite site
+        shell: bash -el {0}
+        working-directory: examples/jupyterlite/webgl
+        run: |
+          export PATH="$PWD/.deps/jupyterlite/bin:$PATH"
+          ./build.sh
+          touch dist/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: examples/jupyterlite/webgl/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

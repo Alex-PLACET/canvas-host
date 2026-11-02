@@ -1,0 +1,15 @@
+#pragma once
+
+/*
+ * Template for the generated header that embeds the browser runtime.
+ *
+ * Generated from the TypeScript runtime modules by CMake. Do not edit.
+ *
+ * The runtime is minified by the configured external tool (terser or esbuild)
+ * when enabled, then embedded in the notebook HTML so the browser does not
+ * fetch /files/canvas-host.js at runtime.
+ */
+
+inline constexpr const char* canvas_host_js = R"CANVAS_HOST_JS(
+@CANVAS_HOST_JS@
+)CANVAS_HOST_JS";

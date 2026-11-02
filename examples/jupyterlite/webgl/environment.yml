@@ -1,0 +1,10 @@
+# JupyterLite environment for building and serving the WebGL example.
+
+name: canvas-host-jupyterlite
+channels:
+  - conda-forge
+dependencies:
+  # jupyter_server is required to index custom notebook contents.
+  - jupyter_server
+  - jupyterlite-core >=0.6
+  - jupyterlite-xeus >=4
