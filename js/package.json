@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "description": "Browser-side canvas-host runtime TypeScript package.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node bundle.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test tests/canvas-host.test.mjs"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

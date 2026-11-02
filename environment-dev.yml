@@ -1,0 +1,20 @@
+# Host development environment: C++ toolchain, tests, Node.js, and formatting.
+
+name: canvas-host-dev
+channels:
+  - conda-forge
+dependencies:
+  # Host C/C++ toolchain and build system
+  - cxx-compiler
+  - cmake
+  - ninja
+  - make
+  # C++ dependencies and tests
+  - catch2>=3
+  - nlohmann_json
+  # Browser runtime tooling
+  - nodejs>=20
+  - esbuild
+  # Development tools
+  - clang-tools
+  - git

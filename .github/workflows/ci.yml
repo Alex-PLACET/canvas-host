@@ -1,0 +1,95 @@
+# Host tests, formatting/typechecking, and the Emscripten build matrix.
+
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  host:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniforge-version: latest
+          environment-file: environment-dev.yml
+          activate-environment: canvas-host-dev
+          use-mamba: true
+      - name: Install JavaScript dependencies
+        shell: bash -el {0}
+        run: npm --prefix js ci
+      - name: Configure
+        shell: bash -el {0}
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCANVAS_HOST_BUILD_TESTS=ON
+          -DCANVAS_HOST_BUILD_C_API=OFF
+          -DCANVAS_HOST_BUILD_JS=ON
+          -DCANVAS_HOST_MINIFIER=OFF
+      - name: Build
+        shell: bash -el {0}
+        run: cmake --build build
+      - name: Test
+        shell: bash -el {0}
+        run: ctest --test-dir build --output-on-failure
+      - name: TypeScript typecheck
+        shell: bash -el {0}
+        run: npm --prefix js run typecheck
+      - name: Formatting
+        shell: bash -el {0}
+        run: >
+          find include src tests -type f
+          \( -name '*.h' -o -name '*.hpp' -o -name '*.cpp' \)
+          -print0 | xargs -0 clang-format --dry-run --Werror
+
+  emscripten:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - channel: https://prefix.dev/emscripten-forge-4x
+            version: 4.0.9
+          - channel: https://prefix.dev/emscripten-forge-6x
+            version: 6.0.8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          micromamba-version: latest
+          init-shell: bash
+          cache-environment: true
+      - name: Create wasm environments
+        shell: bash -el {0}
+        run: |
+          micromamba create -y -p "$PWD/.deps/wasm-build" \
+            -c "${{ matrix.channel }}" -c conda-forge \
+            "emscripten_emscripten-wasm32=${{ matrix.version }}" \
+            cmake nodejs esbuild
+          micromamba create -y -p "$PWD/.deps/wasm-host" \
+            --platform=emscripten-wasm32 \
+            -c "${{ matrix.channel }}" -c conda-forge \
+            xeus xeus-lite "cppinterop>=1.9" cpp-argparse pugixml \
+            nlohmann_json nlohmann_json-abi
+      - name: Install JavaScript dependencies
+        shell: bash -el {0}
+        run: PATH="$PWD/.deps/wasm-build/bin:$PATH" npm --prefix js ci
+      - name: Configure
+        shell: bash -el {0}
+        run: |
+          export PATH="$PWD/.deps/wasm-build/bin:$PATH"
+          emcmake cmake -S . -B build-em \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_FIND_ROOT_PATH="$PWD/.deps/wasm-host" \
+            -DCMAKE_PREFIX_PATH="$PWD/.deps/wasm-host" \
+            -DSYSROOT_PATH="$PWD/.deps/wasm-build/opt/emsdk/upstream/emscripten/cache/sysroot" \
+            -DCANVAS_HOST_BUILD_C_API=ON \
+            -DCANVAS_HOST_BUILD_JS=ON \
+            -DCANVAS_HOST_BUILD_TESTS=OFF
+      - name: Build
+        shell: bash -el {0}
+        run: |
+          export PATH="$PWD/.deps/wasm-build/bin:$PATH"
+          cmake --build build-em -j 2

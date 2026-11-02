@@ -1,0 +1,23 @@
+{
+  // TypeScript compiler settings for the canvas-host browser runtime.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "esnext",
+    "outDir": "build",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noEmitOnError": true,
+    "skipLibCheck": true,
+    "types": [],
+    "removeComments": false
+  },
+  "files": [
+    "types.ts",
+    "constants.ts",
+    "utils.ts",
+    "events.ts",
+    "state.ts",
+    "attach.ts",
+    "main.ts"
+  ]
+}

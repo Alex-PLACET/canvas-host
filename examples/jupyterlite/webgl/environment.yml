@@ -1,0 +1,8 @@
+# JupyterLite environment for building and serving the WebGL example.
+
+name: canvas-host-jupyterlite
+channels:
+  - conda-forge
+dependencies:
+  # Pulls jupyterlite-core and empack. No JupyterLab install is needed.
+  - jupyterlite-xeus
