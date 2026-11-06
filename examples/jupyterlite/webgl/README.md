@@ -17,7 +17,7 @@ holding a key changes its color.
 The worker canvas needs xeus-cpp built with `XEUS_CPP_EMSCRIPTEN_WEBGL=ON`.
 This example builds the pinned
 [compiler-research/xeus-cpp PR 505](https://github.com/compiler-research/xeus-cpp/pull/505)
-commit `5c7c189c27834199199f42d10c441192f787bf5f`.
+commit `6b1503e96612b4871be659d3ad631b67a67c3131`.
 
 The kernel build uses two environments because the tools and the wasm
 packages target different platforms:

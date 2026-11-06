@@ -318,7 +318,7 @@ http://127.0.0.1:8040/lab/index.html?path=webgl.ipynb
 Worker WebGL requires xeus-cpp built with `XEUS_CPP_EMSCRIPTEN_WEBGL=ON`.
 `build_kernel.sh` builds the pinned
 [compiler-research/xeus-cpp PR 505](https://github.com/compiler-research/xeus-cpp/pull/505)
-commit `5c7c189c27834199199f42d10c441192f787bf5f` into `.deps/wasm-host`, then
+commit `6b1503e96612b4871be659d3ad631b67a67c3131` into `.deps/wasm-host`, then
 builds and installs the `canvas_host_c` library and its headers into the same
 prefix. The wasm build environment includes Node.js and esbuild for the
 TypeScript runtime.

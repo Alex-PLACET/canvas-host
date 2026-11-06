@@ -15,7 +15,7 @@ MAMBA="${MAMBA:-micromamba}"
 REPO="${XEUS_CPP_REPO:-https://github.com/compiler-research/xeus-cpp.git}"
 PR="${XEUS_CPP_PR:-505}"
 # Head commit of compiler-research/xeus-cpp PR 505.
-REV="${XEUS_CPP_REV:-5c7c189c27834199199f42d10c441192f787bf5f}"
+REV="${XEUS_CPP_REV:-6b1503e96612b4871be659d3ad631b67a67c3131}"
 
 NPROC="$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)"
 
