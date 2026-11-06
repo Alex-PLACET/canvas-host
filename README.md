@@ -7,6 +7,8 @@ and C++17 API to notebook cells. It does not initialize SDL, sokol, bgfx,
 raylib, ImGui, or any other renderer. Applications receive a canvas, a WebGL2
 context, and normalized input events, then drive their own renderer.
 
+**Live demo:** [Open the WebGL notebook on GitHub Pages](https://alex-placet.github.io/canvas-host/lab/index.html?path=webgl.ipynb)
+
 ## What it provides
 
 - Emits a `<canvas>` in notebook output
