@@ -4,5 +4,7 @@ name: canvas-host-jupyterlite
 channels:
   - conda-forge
 dependencies:
-  # Pulls jupyterlite-core and empack. No JupyterLab install is needed.
-  - jupyterlite-xeus
+  # jupyter_server is required to index custom notebook contents.
+  - jupyter_server
+  - jupyterlite-core >=0.6
+  - jupyterlite-xeus >=4

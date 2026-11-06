@@ -27,7 +27,7 @@ packages target different platforms:
 - `environment-wasm-host.yml`: wasm dependencies of xeus-cpp
 
 The JupyterLite tooling only needs `environment.yml`, which installs
-`jupyterlite-xeus`; that pulls `jupyterlite-core` and `empack`.
+`jupyterlite-xeus`, `jupyterlite-core`, and `jupyter_server`.
 
 `build_kernel.sh` also builds and installs the `<canvas_host/...>` headers and
 `canvas_host_c` into the same wasm prefix, so notebook cells can include the
