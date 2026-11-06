@@ -31,8 +31,7 @@ The JupyterLite tooling only needs `environment.yml`, which installs
 
 `build_kernel.sh` also builds and installs the `<canvas_host/...>` headers and
 `canvas_host_c` into the same wasm prefix, so notebook cells can include the
-C++ API and link the library. `build.sh` verifies those files before packing
-the site.
+C++ API and link the library.
 
 ## Build and serve
 
@@ -51,10 +50,9 @@ Build the xeus-cpp WebGL kernel and then the JupyterLite site:
 python3 -m http.server 8040 --directory dist
 ```
 
-`build_kernel.sh` creates local prefixes under `.deps/`, clones and builds
-xeus-cpp at the pinned PR commit, installs it into `.deps/wasm-host`, and then
-builds and installs canvas-host into the same prefix. `build.sh` verifies the
-prefix and packs it as the JupyterLite kernel.
+`build_kernel.sh` creates local prefixes under `.deps/`; subsequent runs reuse
+them. `build.sh` verifies the prepared prefix before packing it as the
+JupyterLite kernel.
 
 To reuse an existing xeus-cpp WebGL prefix:
 

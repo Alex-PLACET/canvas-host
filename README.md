@@ -33,6 +33,8 @@ context, and normalized input events, then drive their own renderer.
 - A kernel that installs the `include/canvas_host/` headers and links
   `canvas_host_c`
 
+Emscripten 4.0.9 and 6.0.8 are covered by CI.
+
 ## Development environment
 
 For host development and tests, create the conda-forge environment:
@@ -294,44 +296,13 @@ include `dx`, `dy`, and `deltaMode`.
 
 ## Example
 
-`examples/jupyterlite/webgl` is the reference example. It attaches a worker
-canvas, creates a WebGL2 context, polls pointer and keyboard events, and draws a
-simple full-screen shader.
+`examples/jupyterlite/webgl` is the reference WebGL2 example: it attaches a
+worker canvas, creates a WebGL2 context, polls pointer and keyboard events, and
+draws a simple full-screen shader.
 
-Build and serve it from its directory:
-
-```bash
-cd examples/jupyterlite/webgl
-mamba env create -f environment.yml
-mamba activate canvas-host-jupyterlite
-./build_kernel.sh
-./build.sh
-python3 -m http.server 8040 --directory dist
-```
-
-Open:
-
-```text
-http://127.0.0.1:8040/lab/index.html?path=webgl.ipynb
-```
-
-Worker WebGL requires xeus-cpp built with `XEUS_CPP_EMSCRIPTEN_WEBGL=ON`.
-`build_kernel.sh` builds the pinned
-[compiler-research/xeus-cpp PR 505](https://github.com/compiler-research/xeus-cpp/pull/505)
-commit `6b1503e96612b4871be659d3ad631b67a67c3131` into `.deps/wasm-host`, then
-builds and installs the `canvas_host_c` library and its headers into the same
-prefix. The wasm build environment includes Node.js and esbuild for the
-TypeScript runtime.
-
-To reuse an existing xeus-cpp WebGL prefix, install `canvas_host_c` and the
-`include/canvas_host/` headers into it first:
-
-```bash
-XEUS_CPP_PREFIX=/path/to/xeus-cpp-wasm-host ./build.sh
-```
-
-`build.sh` verifies that the prefix contains the kernel, headers, and
-`canvas_host_c` before packing the JupyterLite site.
+For the pinned xeus-cpp kernel, environment setup, build/serve commands, and
+prefix reuse instructions, see
+[`examples/jupyterlite/webgl/README.md`](examples/jupyterlite/webgl/README.md).
 
 ## Tests
 
@@ -361,6 +332,11 @@ Run the browser runtime tests directly with:
 Tests are host-only; Emscripten builds do not build test executables. Use
 `-DCANVAS_HOST_SANITIZE=ON` to enable ASan/UBSan on the host tests.
 
+## CI
+
+GitHub Actions runs the host test suite, formatting and TypeScript type checks,
+and Emscripten builds with 4.0.9 and 6.0.8.
+
 ## Formatting
 
 C/C++ sources are formatted with `clang-format` using the checked-in
@@ -374,6 +350,9 @@ canvas-host/
 ├── include/canvas_host/canvas_host.h     # C17 API
 ├── include/canvas_host/canvas_host.hpp   # C++17 API
 ├── include/canvas_host/version.h         # Version macros
+├── cmake/canvas-host-js.cmake            # TypeScript compile/minify helper
+├── cmake/canvas-host-config.cmake.in     # Installed package config template
+├── cmake/canvas_host_js.hpp.in           # Embedded runtime header template
 ├── src/canvas_host.cpp                   # C ABI adapter
 ├── src/canvas_host_detail.cpp            # Escaping, files, HTML, status listener
 ├── src/canvas_host_canvas.cpp            # Canvas state, events, control, cleanup
@@ -389,10 +368,12 @@ canvas-host/
 ├── js/utils.ts                           # Globals, validation, arguments, script loading
 ├── js/bundle.mjs                         # Concatenates compiled modules
 ├── js/tests/                             # Browser runtime tests
-├── js/package.json                       # TypeScript dev dependency
+├── js/package.json                       # TypeScript scripts and dev dependency
+├── js/package-lock.json                  # Pinned Node dependency versions
 ├── js/tsconfig.json                      # TypeScript compiler settings
 ├── examples/jupyterlite/webgl/           # reference example
 ├── environment-dev.yml                   # conda-forge host dev environment
+├── .github/workflows/ci.yml              # Host and Emscripten CI
 ├── .clang-format                         # C/C++ formatting rules
 ├── tests/
 │   ├── c/                                # Catch2 host tests
