@@ -69,3 +69,19 @@ http://127.0.0.1:8040/lab/index.html?path=webgl.ipynb
 Run the cells in order. The attach cell must finish rendering before the
 context cell runs, because the browser transfers the canvas to the worker
 asynchronously.
+
+## Deployment
+
+The dedicated `Pages` workflow in `.github/workflows/pages.yml` builds the
+kernel and JupyterLite site and deploys `dist/` to GitHub Pages on pushes to
+`master` or on manual dispatch.
+
+Enable GitHub Pages with **Source: GitHub Actions** in the repository settings.
+The deployed notebook is available at:
+
+```text
+https://<user>.github.io/<repository>/lab/index.html?path=webgl.ipynb
+```
+
+The workflow caches the wasm environments and the pinned xeus-cpp source, and
+adds `.nojekyll` before uploading the Pages artifact.

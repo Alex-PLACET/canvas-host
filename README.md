@@ -335,7 +335,8 @@ Tests are host-only; Emscripten builds do not build test executables. Use
 ## CI
 
 GitHub Actions runs the host test suite, formatting and TypeScript type checks,
-and Emscripten builds with 4.0.9 and 6.0.8.
+and Emscripten builds with 4.0.9 and 6.0.8. The dedicated Pages workflow deploys
+the WebGL example; see its README for details.
 
 ## Formatting
 
@@ -373,7 +374,7 @@ canvas-host/
 ├── js/tsconfig.json                      # TypeScript compiler settings
 ├── examples/jupyterlite/webgl/           # reference example
 ├── environment-dev.yml                   # conda-forge host dev environment
-├── .github/workflows/ci.yml              # Host and Emscripten CI
+├── .github/workflows/                    # Host CI and GitHub Pages deployment
 ├── .clang-format                         # C/C++ formatting rules
 ├── tests/
 │   ├── c/                                # Catch2 host tests
