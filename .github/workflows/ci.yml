@@ -52,7 +52,7 @@ jobs:
         include:
           - channel: https://prefix.dev/emscripten-forge-4x
             version: 4.0.9
-          - channel: https://prefix.dev/emscripten-forge-6x
+          - channel: https://repo.prefix.dev/emscripten-forge-bot/emscripten-forge-6x
             version: 6.0.8
     steps:
       - uses: actions/checkout@v7
@@ -60,7 +60,6 @@ jobs:
         with:
           micromamba-version: latest
           init-shell: bash
-          cache-environment: true
       - name: Create wasm environments
         shell: bash -el {0}
         run: |
@@ -71,8 +70,7 @@ jobs:
           micromamba create -y -p "$PWD/.deps/wasm-host" \
             --platform=emscripten-wasm32 \
             -c "${{ matrix.channel }}" -c conda-forge \
-            xeus xeus-lite "cppinterop>=1.9" cpp-argparse pugixml \
-            nlohmann_json nlohmann_json-abi
+            xeus nlohmann_json
       - name: Install JavaScript dependencies
         shell: bash -el {0}
         run: PATH="$PWD/.deps/wasm-build/bin:$PATH" npm --prefix js ci
