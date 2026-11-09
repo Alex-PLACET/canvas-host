@@ -6,6 +6,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <array>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -26,8 +27,8 @@ TEST_CASE("C API manages worker and main-thread canvases", "[canvas_host]")
 {
     canvas_host_worker_config worker = canvas_host_worker_config_default();
     canvas_host_main_config app = canvas_host_main_config_default();
-    char path[256];
-    char event[128];
+    std::array<char, 256> path{};
+    std::array<char, 128> event{};
 
     worker.width = 800;
     worker.height = 600;
@@ -92,30 +93,30 @@ TEST_CASE("C API manages worker and main-thread canvases", "[canvas_host]")
     REQUIRE(contains(test_last_script(), "Module.FS.stat"));
     REQUIRE(contains(test_last_script(), "1048576"));
 
-    std::snprintf(path, sizeof(path), "/tmp/canvas-host-events-%s", canvas_host_id(canvas));
-    FILE* file = std::fopen(path, "wb");
+    std::snprintf(path.data(), path.size(), "/tmp/canvas-host-events-%s", canvas_host_id(canvas));
+    FILE* file = std::fopen(path.data(), "wb");
     REQUIRE(file != nullptr);
     std::fputs("{\"type\":\"pointerdown\"}\n{\"type\":\"pointerup\"}\n", file);
     std::fclose(file);
 
-    REQUIRE(canvas_host_poll_event(canvas, event, sizeof(event)) == 1);
-    REQUIRE(std::strcmp(event, "{\"type\":\"pointerdown\"}") == 0);
-    REQUIRE(canvas_host_poll_event(canvas, event, sizeof(event)) == 1);
-    REQUIRE(std::strcmp(event, "{\"type\":\"pointerup\"}") == 0);
-    REQUIRE(canvas_host_poll_event(canvas, event, sizeof(event)) == 0);
+    REQUIRE(canvas_host_poll_event(canvas, event.data(), event.size()) == 1);
+    REQUIRE(std::strcmp(event.data(), "{\"type\":\"pointerdown\"}") == 0);
+    REQUIRE(canvas_host_poll_event(canvas, event.data(), event.size()) == 1);
+    REQUIRE(std::strcmp(event.data(), "{\"type\":\"pointerup\"}") == 0);
+    REQUIRE(canvas_host_poll_event(canvas, event.data(), event.size()) == 0);
 
-    file = std::fopen(path, "wb");
+    file = std::fopen(path.data(), "wb");
     REQUIRE(file != nullptr);
     std::fputs("{\"type\":\"pointerdown\"}\n{\"type\":\"pointerup\"}\n", file);
     std::fclose(file);
-    REQUIRE(canvas_host_poll_event(canvas, event, 8) == -1);
+    REQUIRE(canvas_host_poll_event(canvas, event.data(), 8) == -1);
     REQUIRE(contains(canvas_host_error(canvas), "buffer"));
-    REQUIRE(canvas_host_poll_event(canvas, event, sizeof(event)) == 1);
-    REQUIRE(std::strcmp(event, "{\"type\":\"pointerdown\"}") == 0);
-    REQUIRE(canvas_host_poll_event(canvas, event, sizeof(event)) == 1);
-    REQUIRE(std::strcmp(event, "{\"type\":\"pointerup\"}") == 0);
-    REQUIRE(canvas_host_poll_event(canvas, event, sizeof(event)) == 0);
-    std::remove(path);
+    REQUIRE(canvas_host_poll_event(canvas, event.data(), event.size()) == 1);
+    REQUIRE(std::strcmp(event.data(), "{\"type\":\"pointerdown\"}") == 0);
+    REQUIRE(canvas_host_poll_event(canvas, event.data(), event.size()) == 1);
+    REQUIRE(std::strcmp(event.data(), "{\"type\":\"pointerup\"}") == 0);
+    REQUIRE(canvas_host_poll_event(canvas, event.data(), event.size()) == 0);
+    std::remove(path.data());
 
     test_script_int_result = 1;
     test_script_string_result = "deliberate JS error";
@@ -144,24 +145,24 @@ TEST_CASE("C API manages worker and main-thread canvases", "[canvas_host]")
     REQUIRE(contains(test_last_script(), "/tmp/canvas-host-events-c-worker"));
     REQUIRE(contains(test_last_script(), "/tmp/canvas-host-error-c-worker"));
 
-    file = std::fopen(path, "wb");
+    file = std::fopen(path.data(), "wb");
     REQUIRE(file != nullptr);
     std::fputs("{\"type\":\"stale\"}\n", file);
     std::fclose(file);
-    REQUIRE(canvas_host_poll_event(canvas, event, sizeof(event)) == 0);
-    std::remove(path);
+    REQUIRE(canvas_host_poll_event(canvas, event.data(), event.size()) == 0);
+    std::remove(path.data());
     canvas_host_destroy(canvas);
 
     app.canvas_id = "c-app";
     app.script = "/files/app.js";
     app.factory = "createApp";
     app.start = "app_start";
-    const char* args[] = {"\"${canvasId}\"", "900"};
-    const char* types[] = {"string", "number"};
-    app.start_args = args;
-    app.start_args_count = 2;
-    app.start_arg_types = types;
-    app.start_arg_types_count = 2;
+    const std::array<const char*, 2> args = {"\"${canvasId}\"", "900"};
+    const std::array<const char*, 2> types = {"string", "number"};
+    app.start_args = args.data();
+    app.start_args_count = args.size();
+    app.start_arg_types = types.data();
+    app.start_arg_types_count = types.size();
 
     test_reset();
     canvas_host_canvas* main_canvas = canvas_host_attach_main(&app);
@@ -186,14 +187,15 @@ TEST_CASE("C API manages worker and main-thread canvases", "[canvas_host]")
     REQUIRE(canvas_host_pixel_width(main_canvas) == 900);
 
     test_script_int_result = 1;
-    std::snprintf(path, sizeof(path), "/tmp/canvas-host-error-%s", canvas_host_id(main_canvas));
-    file = std::fopen(path, "wb");
+    std::snprintf(
+        path.data(), path.size(), "/tmp/canvas-host-error-%s", canvas_host_id(main_canvas));
+    file = std::fopen(path.data(), "wb");
     REQUIRE(file != nullptr);
     std::fputs("deliberate error", file);
     std::fclose(file);
     REQUIRE(canvas_host_has_error(main_canvas));
     REQUIRE(std::strcmp(canvas_host_error(main_canvas), "canvas-host: deliberate error") == 0);
-    std::remove(path);
+    std::remove(path.data());
 
     canvas_host_destroy(main_canvas);
 }
@@ -212,12 +214,12 @@ TEST_CASE("C API validates main-thread configuration", "[canvas_host]")
     REQUIRE(contains(canvas_host_last_error(), "object"));
 
     app.options_json = nullptr;
-    const char* args[] = {"1"};
-    const char* types[] = {"number", "number"};
-    app.start_args = args;
-    app.start_args_count = 1;
-    app.start_arg_types = types;
-    app.start_arg_types_count = 2;
+    const std::array<const char*, 1> args = {"1"};
+    const std::array<const char*, 2> types = {"number", "number"};
+    app.start_args = args.data();
+    app.start_args_count = args.size();
+    app.start_arg_types = types.data();
+    app.start_arg_types_count = types.size();
     REQUIRE(canvas_host_attach_main(&app) == nullptr);
     REQUIRE(contains(canvas_host_last_error(), "same length"));
 

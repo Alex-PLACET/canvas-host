@@ -273,7 +273,8 @@ void display_html(const std::string& html)
 
 std::string path_component(std::string_view value)
 {
-    static constexpr char kHex[] = "0123456789ABCDEF";
+    static constexpr std::array<char, 16> kHex = {
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
     std::string result;
     result.reserve(value.size());
     for (const unsigned char c : value)
