@@ -43,11 +43,7 @@ inline constexpr const char* kInvalidEventJsonPrefix = "canvas-host: invalid eve
 inline constexpr std::size_t kMaxEventQueueBytes = 1024 * 1024;
 inline constexpr int kStatusChannelCloseDelayMs = 100;
 inline constexpr double kDefaultDevicePixelRatio = 1.0;
-inline constexpr unsigned char kUtf8LeadByte = 0xE2;
-inline constexpr unsigned char kUtf8ContinuationByte = 0x80;
-inline constexpr unsigned char kUtf8LineSeparator = 0xA8;
-inline constexpr unsigned char kUtf8ParagraphSeparator = 0xA9;
-inline constexpr std::size_t kUtf8SequenceTail = 2;
+inline constexpr const char* kJsLessThanEscape = "\\u003c";
 inline constexpr const char* kNotReadyError =
     "canvas-host: the canvas is not ready yet. "
     "Run the attach cell, wait for the output to render, then run "

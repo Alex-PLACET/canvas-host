@@ -78,33 +78,28 @@ std::string html_escape(std::string_view text)
 
 /**
  * @brief Serialize JSON and make it safe for an HTML script element.
+ *
+ * Non-ASCII characters are emitted as JavaScript \uXXXX escapes by the
+ * serializer, so the result is safe in older JavaScript parsers as well as
+ * inside a script element.
+ *
  * @param value JSON value to serialize.
  * @return JSON text that cannot terminate the surrounding script element.
  */
 std::string json_for_script(const nl::json& value)
 {
-    const std::string text = value.dump();
+    const std::string text = value.dump(-1, ' ', true);
     std::string result;
     result.reserve(text.size());
-    for (std::size_t i = 0; i < text.size(); ++i)
+    for (const char c : text)
     {
-        const auto c = static_cast<unsigned char>(text[i]);
         if (c == '<')
         {
-            result += "\\u003c";
-        }
-        else if (c == kUtf8LeadByte && i + kUtf8SequenceTail < text.size() &&
-                 static_cast<unsigned char>(text[i + 1]) == kUtf8ContinuationByte &&
-                 (static_cast<unsigned char>(text[i + 2]) == kUtf8LineSeparator ||
-                  static_cast<unsigned char>(text[i + 2]) == kUtf8ParagraphSeparator))
-        {
-            result += static_cast<unsigned char>(text[i + 2]) == kUtf8LineSeparator ? "\\u2028"
-                                                                                    : "\\u2029";
-            i += kUtf8SequenceTail;
+            result += kJsLessThanEscape;
         }
         else
         {
-            result.push_back(text[i]);
+            result.push_back(c);
         }
     }
     return result;

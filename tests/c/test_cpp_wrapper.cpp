@@ -168,6 +168,12 @@ TEST_CASE("C++ wrapper manages a worker canvas", "[canvas_host]")
                                                                  "\xE2\x80\xA9"
                                                                  "c");
     REQUIRE(separators == "\"a\\u2028b\\u2029c\"");
+
+    const std::string accented = canvas_host::detail::js_quote("\xC3\xA9");
+    REQUIRE(accented == "\"\\u00e9\"");
+
+    const std::string emoji = canvas_host::detail::js_quote("\xF0\x9F\x98\x80");
+    REQUIRE(emoji == "\"\\ud83d\\ude00\"");
 }
 
 TEST_CASE("C++ wrapper validates configuration and empty canvases", "[canvas_host]")
