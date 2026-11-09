@@ -16,11 +16,6 @@ namespace
 constexpr int kWebGL2MajorVersion = 2;
 constexpr int kWebGL2MinorVersion = 0;
 
-/**
- * @brief Write a diagnostic message to the canvas log stream.
- * @param canvas Canvas whose log stream should receive the message.
- * @param message Message to write.
- */
 void log_message(const Canvas& canvas, const char* message)
 {
     if (std::ostream* stream = canvas.log_stream())
@@ -38,9 +33,6 @@ void log_message(const Canvas& canvas, const char* message)
 
 } // namespace
 
-/**
- * @brief Create and make current a WebGL2 context on an attached canvas.
- */
 int create_webgl2_context(const Canvas& canvas,
                           bool alpha,
                           bool depth,

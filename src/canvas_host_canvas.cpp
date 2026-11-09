@@ -20,9 +20,6 @@
 namespace canvas_host
 {
 
-/**
- * @brief Construct an attached Canvas with explicit state.
- */
 Canvas::Canvas(Mode mode,
                std::string id,
                std::string global_name,
@@ -40,59 +37,26 @@ Canvas::Canvas(Mode mode,
 {
 }
 
-/**
- * @brief Return the hosting mode.
- */
 Mode Canvas::mode() const { return m_mode; }
 
-/**
- * @brief Check whether the canvas is a worker OffscreenCanvas.
- */
 bool Canvas::is_worker() const { return m_mode == Mode::WorkerOffscreen; }
 
-/**
- * @brief Check whether the canvas belongs to a main-thread application.
- */
 bool Canvas::is_main() const { return m_mode == Mode::MainThreadApp; }
 
-/**
- * @brief Return the canvas ID.
- */
 const std::string& Canvas::id() const { return m_id; }
 
-/**
- * @brief Return the worker global name.
- */
 const std::string& Canvas::global_name() const { return m_global_name; }
 
-/**
- * @brief Return the configured CSS width.
- */
 int Canvas::width() const { return m_width; }
 
-/**
- * @brief Return the configured CSS height.
- */
 int Canvas::height() const { return m_height; }
 
-/**
- * @brief Check whether the backing store is HiDPI.
- */
 bool Canvas::hidpi() const { return m_hidpi; }
 
-/**
- * @brief Return the backing-store width in device pixels.
- */
 int Canvas::pixel_width() const { return pixel_dimension("width", "pixel_width", m_width); }
 
-/**
- * @brief Return the backing-store height in device pixels.
- */
 int Canvas::pixel_height() const { return pixel_dimension("height", "pixel_height", m_height); }
 
-/**
- * @brief Return the backing-store device pixel ratio.
- */
 double Canvas::device_pixel_ratio() const
 {
     const int width = pixel_width();
@@ -100,9 +64,6 @@ double Canvas::device_pixel_ratio() const
                                     : detail::kDefaultDevicePixelRatio;
 }
 
-/**
- * @brief Check whether the canvas has been transferred or initialized.
- */
 bool Canvas::ready() const
 {
     if (m_id.empty())
@@ -113,22 +74,16 @@ bool Canvas::ready() const
                                                              : detail::ready_global(m_id));
 }
 
-/**
- * @brief Check whether the canvas has reported an error.
- */
 bool Canvas::has_error() const
 {
     return !m_id.empty() && detail::js_truthy(detail::error_global(m_id));
 }
 
-/**
- * @brief Return the last error text.
- */
 std::string Canvas::error() const
 {
     if (m_id.empty())
     {
-        return detail::kUnknownError;
+        return std::string(detail::kUnknownError);
     }
     std::string message = detail::read_file(detail::error_path(m_id));
     if (!message.empty())
@@ -141,14 +96,8 @@ std::string Canvas::error() const
     return value && *value ? std::string(value) : std::string(detail::kUnknownError);
 }
 
-/**
- * @brief Return the stream used for diagnostic messages.
- */
 std::ostream* Canvas::log_stream() const { return m_log_stream; }
 
-/**
- * @brief Require the canvas to be ready.
- */
 void Canvas::require_ready() const
 {
     if (ready())
@@ -159,21 +108,18 @@ void Canvas::require_ready() const
     {
         throw std::runtime_error(std::format("{}{}", detail::kErrorPrefix, error()));
     }
-    throw std::runtime_error(detail::kNotReadyError);
+    throw std::runtime_error(std::string(detail::kNotReadyError));
 }
 
-/**
- * @brief Register the transferred OffscreenCanvas as Emscripten's "#canvas".
- */
 void Canvas::register_canvas() const
 {
     if (m_id.empty())
     {
-        throw std::runtime_error(detail::kNotAttachedError);
+        throw std::runtime_error(std::string(detail::kNotAttachedError));
     }
     if (m_mode != Mode::WorkerOffscreen)
     {
-        throw std::runtime_error(detail::kWorkerOnlyError);
+        throw std::runtime_error(std::string(detail::kWorkerOnlyError));
     }
     require_ready();
 
@@ -212,9 +158,6 @@ void Canvas::register_canvas() const
     run_script(script);
 }
 
-/**
- * @brief Run a JavaScript snippet and throw when it reports failure.
- */
 void Canvas::run_script(const std::string& script) const
 {
     if (emscripten_run_script_int(script.c_str()) == 0)
@@ -223,9 +166,6 @@ void Canvas::run_script(const std::string& script) const
     }
 }
 
-/**
- * @brief Destroy an Emscripten WebGL context.
- */
 void Canvas::destroy_webgl2_context(int handle) const
 {
     if (handle != 0)
@@ -234,14 +174,11 @@ void Canvas::destroy_webgl2_context(int handle) const
     }
 }
 
-/**
- * @brief Start forwarding normalized browser input events.
- */
 void Canvas::start_events()
 {
     if (m_id.empty())
     {
-        throw std::runtime_error(detail::kNotAttachedError);
+        throw std::runtime_error(std::string(detail::kNotAttachedError));
     }
 
     const std::string error_name = detail::error_global(m_id);
@@ -306,14 +243,8 @@ void Canvas::start_events()
     m_events_path = events_file;
 }
 
-/**
- * @brief Read one JSON event line from the worker event queue.
- */
 bool Canvas::poll_event(std::string& line) { return poll_event(line, std::string::npos); }
 
-/**
- * @brief Read one JSON event line with a size limit.
- */
 bool Canvas::poll_event(std::string& line, std::size_t max_size)
 {
     if (m_events_path.empty())
@@ -355,7 +286,7 @@ bool Canvas::poll_event(std::string& line, std::size_t max_size)
     }
     if (max_size != std::string::npos && candidate.size() + 1 > max_size)
     {
-        throw std::runtime_error(detail::kEventTooLargeError);
+        throw std::runtime_error(std::string(detail::kEventTooLargeError));
     }
 
     line = std::move(candidate);
@@ -369,9 +300,6 @@ bool Canvas::poll_event(std::string& line, std::size_t max_size)
     return true;
 }
 
-/**
- * @brief Read one event line and parse it as JSON.
- */
 bool Canvas::poll_event(nl::json& event)
 {
     std::string line;
@@ -391,18 +319,15 @@ bool Canvas::poll_event(nl::json& event)
     }
 }
 
-/**
- * @brief Send a JSON control message to the main-thread host.
- */
 void Canvas::send(const nl::json& message) const
 {
     if (m_id.empty())
     {
-        throw std::runtime_error(detail::kNotAttachedError);
+        throw std::runtime_error(std::string(detail::kNotAttachedError));
     }
     if (!message.is_object())
     {
-        throw std::runtime_error(detail::kMessageObjectError);
+        throw std::runtime_error(std::string(detail::kMessageObjectError));
     }
     nl::json copy = message;
     if (!copy.contains("target"))
@@ -433,9 +358,6 @@ void Canvas::send(const nl::json& message) const
     run_script(script);
 }
 
-/**
- * @brief Stop the application and close canvas-host browser channels.
- */
 void Canvas::stop()
 {
     if (m_id.empty())
@@ -508,9 +430,6 @@ void Canvas::stop()
     m_events_offset = 0;
 }
 
-/**
- * @brief Query a backing-store dimension with a configured fallback.
- */
 int Canvas::pixel_dimension(std::string_view member, std::string_view info, int fallback) const
 {
     if (m_mode == Mode::WorkerOffscreen)

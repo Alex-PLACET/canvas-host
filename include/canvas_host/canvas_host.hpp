@@ -103,7 +103,8 @@ namespace detail
 /**
  * @brief Quote a string as a JavaScript/JSON string literal.
  *
- * This helper builds small JavaScript snippets around a Canvas.
+ * This helper is used when embedding user-provided strings in generated
+ * JavaScript.
  *
  * @param value String to quote.
  * @return A JavaScript string literal including the surrounding double quotes.

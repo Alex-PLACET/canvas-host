@@ -23,42 +23,23 @@ namespace canvas_host
 namespace detail
 {
 
-/**
- * @brief Quote a string as a JavaScript/JSON string literal.
- * @param value String to quote.
- * @return A JavaScript string literal including the surrounding double quotes.
- */
 std::string js_quote(std::string_view value)
 {
     return json_for_script(nl::json(std::string(value)));
 }
 
-/**
- * @brief Return the process-wide counter used to make canvas IDs unique.
- * @return A reference to the canvas-ID counter.
- */
 int& id_counter()
 {
     static int counter = 0;
     return counter;
 }
 
-/**
- * @brief Build a unique canvas ID.
- * @param prefix Prefix for the generated ID.
- * @return A unique ID of the form prefix-time-counter.
- */
 std::string make_id(std::string_view prefix)
 {
     return std::format(
         "{}-{}-{}", prefix, static_cast<long long>(emscripten_get_now()), ++id_counter());
 }
 
-/**
- * @brief Escape text for inclusion in HTML markup.
- * @param text Text to escape.
- * @return HTML-safe text.
- */
 std::string html_escape(std::string_view text)
 {
     if (std::ranges::find_first_of(text, std::string_view{"&<>\"'"}) == text.end())
@@ -83,16 +64,6 @@ std::string html_escape(std::string_view text)
     return result;
 }
 
-/**
- * @brief Serialize JSON and make it safe for an HTML script element.
- *
- * Non-ASCII characters are emitted as JavaScript \uXXXX escapes by the
- * serializer, so the result is safe in older JavaScript parsers as well as
- * inside a script element.
- *
- * @param value JSON value to serialize.
- * @return JSON text that cannot terminate the surrounding script element.
- */
 std::string json_for_script(const nl::json& value)
 {
     const std::string text = value.dump(-1, ' ', true);
@@ -117,11 +88,6 @@ std::string json_for_script(const nl::json& value)
     return result;
 }
 
-/**
- * @brief Read a file completely.
- * @param path File path to read.
- * @return File contents, or an empty string when the file cannot be opened.
- */
 std::string read_file(const std::string& path)
 {
     std::ifstream input(path, std::ios::binary | std::ios::ate);
@@ -146,12 +112,6 @@ std::string read_file(const std::string& path)
     return result;
 }
 
-/**
- * @brief Replace a file with the given contents.
- * @param path File path to write.
- * @param data Contents to write.
- * @throws std::runtime_error When the file cannot be written completely.
- */
 void write_file(const std::string& path, const std::string& data)
 {
     std::ofstream output(path, std::ios::binary | std::ios::trunc);
@@ -168,43 +128,21 @@ void write_file(const std::string& path, const std::string& data)
     }
 }
 
-/**
- * @brief Build the JavaScript global used to store a canvas error.
- * @param id Canvas ID.
- * @return The error-global name.
- */
 std::string error_global(std::string_view id)
 {
     return std::format("{}{}", kErrorGlobalPrefix, id);
 }
 
-/**
- * @brief Build the JavaScript global used to store canvas readiness.
- * @param id Canvas ID.
- * @return The ready-global name.
- */
 std::string ready_global(std::string_view id)
 {
     return std::format("{}{}", kReadyGlobalPrefix, id);
 }
 
-/**
- * @brief Build the JavaScript global used to store one piece of canvas geometry.
- * @param id Canvas ID.
- * @param name Geometry name, such as "pixel_width" or "dpr".
- * @return The info-global name.
- */
 std::string info_global(std::string_view id, std::string_view name)
 {
     return std::format("{}{}_{}", kInfoGlobalPrefix, name, id);
 }
 
-/**
- * @brief Reject JavaScript global names that would mutate object prototypes.
- * @param name Global name to validate.
- * @param field Configuration field name used in the error message.
- * @throws std::runtime_error When the name is empty or reserved.
- */
 void validate_global_name(std::string_view name, std::string_view field)
 {
     if (name.empty() || std::ranges::contains(kReservedGlobalNames, name))
@@ -213,47 +151,25 @@ void validate_global_name(std::string_view name, std::string_view field)
     }
 }
 
-/**
- * @brief Validate one positive canvas dimension.
- * @param value Dimension in CSS pixels.
- * @param message Error message to throw when invalid.
- * @throws std::runtime_error When the dimension is not positive.
- */
-void validate_dimension(int value, const char* message)
+void validate_dimension(int value, std::string_view message)
 {
     if (value <= 0)
     {
-        throw std::runtime_error(message);
+        throw std::runtime_error(std::string(message));
     }
 }
 
-/**
- * @brief Validate the dimensions shared by worker and main-thread configs.
- * @param config Canvas configuration.
- * @throws std::runtime_error When either dimension is not positive.
- */
 void validate_canvas_dimensions(const CanvasConfig& config)
 {
     validate_dimension(config.width, kInvalidWidthError);
     validate_dimension(config.height, kInvalidHeightError);
 }
 
-/**
- * @brief Evaluate whether a JavaScript global is truthy.
- * @param name JavaScript global name.
- * @return true when the global is truthy, false otherwise.
- */
 bool js_truthy(std::string_view name)
 {
     return emscripten_run_script_int(std::format("!!globalThis[{}]", js_quote(name)).c_str()) != 0;
 }
 
-/**
- * @brief Build the status line shown below the canvas.
- * @param id Canvas ID.
- * @param text Status text.
- * @return HTML for the status line.
- */
 std::string status_html(std::string_view id, std::string_view text)
 {
     const std::string safe_id = html_escape(id);
@@ -265,13 +181,6 @@ std::string status_html(std::string_view id, std::string_view text)
         safe_text);
 }
 
-/**
- * @brief Build the canvas element and its horizontal-scroll container.
- * @param id Canvas ID.
- * @param width Canvas width in CSS pixels.
- * @param height Canvas height in CSS pixels.
- * @return HTML for the canvas element.
- */
 std::string canvas_html(std::string_view id, int width, int height)
 {
     // No CSS border: SDL's Emscripten HiDPI path measures the canvas CSS box,
@@ -293,13 +202,6 @@ std::string canvas_html(std::string_view id, int width, int height)
                        kCanvasStyleTail);
 }
 
-/**
- * @brief Build the inline scripts that install the runtime and attach the canvas.
- * @param config Configuration object serialized into the script.
- * @param id Canvas ID.
- * @param js_path Optional external runtime URL; empty uses the embedded runtime.
- * @return HTML script elements containing the runtime/bootstrap code.
- */
 std::string bootstrap_script(const nl::json& config, std::string_view id, std::string_view js_path)
 {
     const std::string error_name = error_global(id);
@@ -362,10 +264,6 @@ std::string bootstrap_script(const nl::json& config, std::string_view id, std::s
     return runtime + attach_script;
 }
 
-/**
- * @brief Display generated HTML in the notebook through xeus.
- * @param html HTML document to display.
- */
 void display_html(const std::string& html)
 {
     nl::json data;
@@ -373,11 +271,6 @@ void display_html(const std::string& html)
     xeus::get_interpreter().display_data(data, nl::json::object(), nl::json::object());
 }
 
-/**
- * @brief Encode a canvas ID for use as one filesystem path component.
- * @param value Canvas ID.
- * @return A collision-free path component without separators.
- */
 std::string path_component(std::string_view value)
 {
     static constexpr char kHex[] = "0123456789ABCDEF";
@@ -401,30 +294,16 @@ std::string path_component(std::string_view value)
     return result;
 }
 
-/**
- * @brief Return the worker-filesystem path used to cache canvas errors.
- * @param id Canvas ID.
- * @return The error-cache path.
- */
 std::string error_path(std::string_view id)
 {
     return std::format("{}{}", kErrorPathPrefix, path_component(id));
 }
 
-/**
- * @brief Return the worker-filesystem path used to queue input events.
- * @param id Canvas ID.
- * @return The event-queue path.
- */
 std::string events_path(std::string_view id)
 {
     return std::format("{}{}", kEventsPathPrefix, path_component(id));
 }
 
-/**
- * @brief Install the BroadcastChannel listener that records readiness and errors.
- * @param id Canvas ID.
- */
 void install_status_listener(std::string_view id)
 {
     const std::string ready_name = ready_global(id);

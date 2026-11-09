@@ -16,11 +16,6 @@ namespace canvas_host
 namespace
 {
 
-/**
- * @brief Display the canvas, status line, and bootstrap script.
- * @param config Canvas configuration.
- * @param data Bootstrap data serialized into the page.
- */
 void display_canvas(const CanvasConfig& config, const nl::json& data)
 {
     // Install the status listener before emitting HTML so the browser cannot
@@ -33,9 +28,6 @@ void display_canvas(const CanvasConfig& config, const nl::json& data)
 
 } // namespace
 
-/**
- * @brief Attach a worker-hosted OffscreenCanvas.
- */
 Canvas attach_worker(WorkerConfig config)
 {
     detail::validate_canvas_dimensions(config);
@@ -69,23 +61,20 @@ Canvas attach_worker(WorkerConfig config)
                   config.log_stream);
 }
 
-/**
- * @brief Attach a main-thread browser application.
- */
 Canvas attach_main(MainConfig config)
 {
     detail::validate_canvas_dimensions(config);
     if (config.factory.empty())
     {
-        throw std::runtime_error(detail::kMissingFactoryError);
+        throw std::runtime_error(std::string(detail::kMissingFactoryError));
     }
     if (!config.options.is_object())
     {
-        throw std::runtime_error(detail::kInvalidOptionsError);
+        throw std::runtime_error(std::string(detail::kInvalidOptionsError));
     }
     if (config.start_args.size() != config.start_arg_types.size())
     {
-        throw std::runtime_error(detail::kStartArgsMismatchError);
+        throw std::runtime_error(std::string(detail::kStartArgsMismatchError));
     }
     if (config.app_global.empty())
     {
