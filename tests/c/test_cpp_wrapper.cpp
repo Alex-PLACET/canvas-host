@@ -213,6 +213,7 @@ TEST_CASE("C++ wrapper writes WebGL diagnostics to the configured stream", "[can
 
     auto canvas = canvas_host::attach_worker(worker);
 
+    test_script_int_result = 1;
     test_webgl_create_result = 0;
     REQUIRE(canvas_host::create_webgl2_context(canvas) == 0);
     REQUIRE(contains(log.str(), "WebGL2 context creation failed"));
@@ -226,6 +227,7 @@ TEST_CASE("C++ wrapper writes WebGL diagnostics to the configured stream", "[can
     REQUIRE(test_webgl_destroyed);
     REQUIRE(contains(log.str(), "could not make the WebGL2 context current"));
 
+    test_script_int_result = 0;
     test_webgl_create_result = 42;
     test_webgl_make_current_result = 0;
 }

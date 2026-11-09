@@ -23,9 +23,13 @@ namespace canvas_host
 /**
  * @brief Construct an attached Canvas with explicit state.
  */
-Canvas::Canvas(
-    Mode mode, std::string id, std::string global_name, int width, int height, bool hidpi,
-    std::ostream* log_stream)
+Canvas::Canvas(Mode mode,
+               std::string id,
+               std::string global_name,
+               int width,
+               int height,
+               bool hidpi,
+               std::ostream* log_stream)
     : m_mode(mode)
     , m_id(std::move(id))
     , m_global_name(std::move(global_name))

@@ -126,7 +126,12 @@ Canvas attach_main(MainConfig config)
     data["hidpi"] = true;
 
     display_canvas(config, data);
-    return Canvas(Mode::MainThreadApp, config.canvas_id, {}, config.width, config.height, true,
+    return Canvas(Mode::MainThreadApp,
+                  config.canvas_id,
+                  {},
+                  config.width,
+                  config.height,
+                  true,
                   config.log_stream);
 }
 

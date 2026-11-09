@@ -302,7 +302,12 @@ private:
      * @param hidpi Whether the backing store is HiDPI.
      * @param log_stream Stream for diagnostics, or nullptr to disable logging.
      */
-    Canvas(Mode mode, std::string id, std::string global_name, int width, int height, bool hidpi,
+    Canvas(Mode mode,
+           std::string id,
+           std::string global_name,
+           int width,
+           int height,
+           bool hidpi,
            std::ostream* log_stream);
 
     /**
@@ -321,15 +326,15 @@ private:
      */
     void run_script(const std::string& script) const;
 
-    Mode m_mode = Mode::WorkerOffscreen; /**< Hosting mode. */
-    std::string m_id;                    /**< Canvas ID. */
-    std::string m_global_name;           /**< Worker global name. */
-    int m_width = 900;                   /**< CSS width. */
-    int m_height = 600;                  /**< CSS height. */
-    bool m_hidpi = true;                 /**< Whether the backing store is HiDPI. */
+    Mode m_mode = Mode::WorkerOffscreen;     /**< Hosting mode. */
+    std::string m_id;                        /**< Canvas ID. */
+    std::string m_global_name;               /**< Worker global name. */
+    int m_width = 900;                       /**< CSS width. */
+    int m_height = 600;                      /**< CSS height. */
+    bool m_hidpi = true;                     /**< Whether the backing store is HiDPI. */
     std::ostream* m_log_stream = &std::cerr; /**< Stream for diagnostics, or nullptr. */
-    std::string m_events_path;           /**< Event queue path, set by start_events(). */
-    std::size_t m_events_offset = 0;     /**< Read offset within the event queue. */
+    std::string m_events_path;               /**< Event queue path, set by start_events(). */
+    std::size_t m_events_offset = 0;         /**< Read offset within the event queue. */
 
     friend Canvas attach_worker(WorkerConfig config);
     friend Canvas attach_main(MainConfig config);
