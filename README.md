@@ -155,6 +155,26 @@ Stop the loop and release the canvas:
 canvas.stop();
 ```
 
+## Logging
+
+Library diagnostics, such as WebGL context creation failures, are written to a
+configurable `std::ostream`. The default is `std::cerr`:
+
+```cpp
+#include <sstream>
+
+std::ostringstream log;
+config.log_stream = &log;
+
+auto canvas = canvas_host::attach_worker(config);
+
+// Later:
+// log.str() contains canvas-host diagnostics.
+```
+
+Set `config.log_stream = nullptr` to disable diagnostic output. The stream must
+outlive the `Canvas` object.
+
 See `examples/jupyterlite/webgl` for a complete WebGL2 setup with a render loop
 and pointer/keyboard handling.
 
@@ -236,6 +256,7 @@ Library: `canvas_host_c`
 
 - `attach_worker(config)`, `attach_main(config)`
 - `Canvas::ready()`, `require_ready()`, `has_error()`, `error()`
+- `Canvas::log_stream()`
 - `Canvas::id()`, `global_name()`, `width()`, `height()`,
   `pixel_width()`, `pixel_height()`, `device_pixel_ratio()`
 - `Canvas::register_canvas()`, `create_webgl2_context(canvas)`,

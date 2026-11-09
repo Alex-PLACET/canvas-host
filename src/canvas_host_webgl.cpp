@@ -7,10 +7,26 @@
 
 #include <emscripten/html5.h>
 
-#include <cstdio>
-
 namespace canvas_host
 {
+
+namespace
+{
+
+/**
+ * @brief Write a diagnostic message to the canvas log stream.
+ * @param canvas Canvas whose log stream should receive the message.
+ * @param message Message to write.
+ */
+void log_message(const Canvas& canvas, const char* message)
+{
+    if (std::ostream* stream = canvas.log_stream())
+    {
+        *stream << message << std::endl;
+    }
+}
+
+} // namespace
 
 /**
  * @brief Create and make current a WebGL2 context on an attached canvas.
@@ -39,16 +55,16 @@ int create_webgl2_context(const Canvas& canvas,
         emscripten_webgl_create_context("#canvas", &attributes);
     if (context == 0)
     {
-        std::fprintf(stderr,
-                     "canvas-host: WebGL2 context creation failed; "
-                     "the kernel must export Module.GL and support OffscreenCanvas\n");
+        log_message(canvas,
+                    "canvas-host: WebGL2 context creation failed; "
+                    "the kernel must export Module.GL and support OffscreenCanvas");
         return 0;
     }
 
     if (emscripten_webgl_make_context_current(context) != EMSCRIPTEN_RESULT_SUCCESS)
     {
         emscripten_webgl_destroy_context(context);
-        std::fprintf(stderr, "canvas-host: could not make the WebGL2 context current\n");
+        log_message(canvas, "canvas-host: could not make the WebGL2 context current");
         return 0;
     }
 

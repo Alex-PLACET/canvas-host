@@ -65,7 +65,8 @@ Canvas attach_worker(WorkerConfig config)
                   config.global_name,
                   config.width,
                   config.height,
-                  config.hidpi);
+                  config.hidpi,
+                  config.log_stream);
 }
 
 /**
@@ -125,7 +126,8 @@ Canvas attach_main(MainConfig config)
     data["hidpi"] = true;
 
     display_canvas(config, data);
-    return Canvas(Mode::MainThreadApp, config.canvas_id, {}, config.width, config.height, true);
+    return Canvas(Mode::MainThreadApp, config.canvas_id, {}, config.width, config.height, true,
+                  config.log_stream);
 }
 
 } // namespace canvas_host

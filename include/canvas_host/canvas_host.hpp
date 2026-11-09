@@ -13,6 +13,7 @@
 #include <nlohmann/json.hpp>
 
 #include <cstddef>
+#include <iostream>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -59,6 +60,7 @@ struct CanvasConfig
     std::string canvas_id;                         /**< Optional canvas ID; generated when empty. */
     std::string status_text = default_status_text; /**< Text shown below the canvas. */
     std::string js_path; /**< Optional external runtime URL; empty uses the embedded runtime. */
+    std::ostream* log_stream = &std::cerr; /**< Stream for diagnostics; nullptr disables logging. */
 };
 
 /**
@@ -209,6 +211,12 @@ public:
     std::string error() const;
 
     /**
+     * @brief Return the stream used for diagnostic messages.
+     * @return The configured stream, or nullptr when logging is disabled.
+     */
+    std::ostream* log_stream() const;
+
+    /**
      * @brief Require the canvas to be ready.
      * @throws std::runtime_error When the canvas is not ready or has an error.
      */
@@ -292,8 +300,10 @@ private:
      * @param width CSS width.
      * @param height CSS height.
      * @param hidpi Whether the backing store is HiDPI.
+     * @param log_stream Stream for diagnostics, or nullptr to disable logging.
      */
-    Canvas(Mode mode, std::string id, std::string global_name, int width, int height, bool hidpi);
+    Canvas(Mode mode, std::string id, std::string global_name, int width, int height, bool hidpi,
+           std::ostream* log_stream);
 
     /**
      * @brief Query one backing-store dimension with a configured fallback.
@@ -317,6 +327,7 @@ private:
     int m_width = 900;                   /**< CSS width. */
     int m_height = 600;                  /**< CSS height. */
     bool m_hidpi = true;                 /**< Whether the backing store is HiDPI. */
+    std::ostream* m_log_stream = &std::cerr; /**< Stream for diagnostics, or nullptr. */
     std::string m_events_path;           /**< Event queue path, set by start_events(). */
     std::size_t m_events_offset = 0;     /**< Read offset within the event queue. */
 

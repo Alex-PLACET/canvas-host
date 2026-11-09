@@ -25,6 +25,8 @@ int test_display_should_fail = 0;
 int test_script_int_result = 0;
 const char* test_script_string_result = "";
 int test_webgl_destroyed = 0;
+int test_webgl_create_result = 42;
+int test_webgl_make_current_result = EMSCRIPTEN_RESULT_SUCCESS;
 
 const char* test_last_html(void) { return g_html.c_str(); }
 
@@ -65,13 +67,13 @@ EMSCRIPTEN_WEBGL_CONTEXT_HANDLE emscripten_webgl_create_context(
 {
     (void)target;
     (void)attributes;
-    return 42;
+    return test_webgl_create_result;
 }
 
 int emscripten_webgl_make_context_current(EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context)
 {
     (void)context;
-    return EMSCRIPTEN_RESULT_SUCCESS;
+    return test_webgl_make_current_result;
 }
 
 void emscripten_webgl_destroy_context(EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context)

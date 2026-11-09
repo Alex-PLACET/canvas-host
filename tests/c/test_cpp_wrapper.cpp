@@ -7,6 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <cstdio>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -18,6 +19,8 @@ void test_reset(void);
 
 extern int test_script_int_result;
 extern int test_webgl_destroyed;
+extern int test_webgl_create_result;
+extern int test_webgl_make_current_result;
 }
 
 TEST_CASE("C++ wrapper manages a worker canvas", "[canvas_host]")
@@ -195,6 +198,36 @@ TEST_CASE("C++ wrapper validates configuration and empty canvases", "[canvas_hos
     app.start_arg_types = {};
     app.app_global = "__proto__";
     REQUIRE_THROWS_AS(canvas_host::attach_main(app), std::runtime_error);
+}
+
+TEST_CASE("C++ wrapper writes WebGL diagnostics to the configured stream", "[canvas_host]")
+{
+    test_webgl_create_result = 42;
+    test_webgl_make_current_result = 0;
+    test_reset();
+
+    canvas_host::WorkerConfig worker;
+    worker.canvas_id = "log-stream";
+    std::ostringstream log;
+    worker.log_stream = &log;
+
+    auto canvas = canvas_host::attach_worker(worker);
+
+    test_webgl_create_result = 0;
+    REQUIRE(canvas_host::create_webgl2_context(canvas) == 0);
+    REQUIRE(contains(log.str(), "WebGL2 context creation failed"));
+    REQUIRE(contains(log.str(), "Module.GL"));
+
+    log.str("");
+    log.clear();
+    test_webgl_create_result = 42;
+    test_webgl_make_current_result = 1;
+    REQUIRE(canvas_host::create_webgl2_context(canvas) == 0);
+    REQUIRE(test_webgl_destroyed);
+    REQUIRE(contains(log.str(), "could not make the WebGL2 context current"));
+
+    test_webgl_create_result = 42;
+    test_webgl_make_current_result = 0;
 }
 
 TEST_CASE("C++ wrapper rejects malformed event JSON", "[canvas_host]")

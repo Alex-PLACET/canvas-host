@@ -24,13 +24,15 @@ namespace canvas_host
  * @brief Construct an attached Canvas with explicit state.
  */
 Canvas::Canvas(
-    Mode mode, std::string id, std::string global_name, int width, int height, bool hidpi)
+    Mode mode, std::string id, std::string global_name, int width, int height, bool hidpi,
+    std::ostream* log_stream)
     : m_mode(mode)
     , m_id(std::move(id))
     , m_global_name(std::move(global_name))
     , m_width(width)
     , m_height(height)
     , m_hidpi(hidpi)
+    , m_log_stream(log_stream)
 {
 }
 
@@ -134,6 +136,11 @@ std::string Canvas::error() const
     const char* value = emscripten_run_script_string(script.c_str());
     return value && *value ? std::string(value) : std::string(detail::kUnknownError);
 }
+
+/**
+ * @brief Return the stream used for diagnostic messages.
+ */
+std::ostream* Canvas::log_stream() const { return m_log_stream; }
 
 /**
  * @brief Require the canvas to be ready.
