@@ -11,7 +11,9 @@
 
 #include <xeus/xinterpreter.hpp>
 
+#include <algorithm>
 #include <fstream>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 
@@ -59,7 +61,7 @@ std::string make_id(std::string_view prefix)
  */
 std::string html_escape(std::string_view text)
 {
-    if (text.find_first_of("&<>\"'") == std::string_view::npos)
+    if (std::ranges::find_first_of(text, std::string_view{"&<>\"'"}) == text.end())
     {
         return std::string(text);
     }
@@ -94,7 +96,7 @@ std::string html_escape(std::string_view text)
 std::string json_for_script(const nl::json& value)
 {
     const std::string text = value.dump(-1, ' ', true);
-    if (text.find('<') == std::string::npos)
+    if (std::ranges::find(text, '<') == text.end())
     {
         return text;
     }
@@ -205,8 +207,7 @@ std::string info_global(std::string_view id, std::string_view name)
  */
 void validate_global_name(std::string_view name, std::string_view field)
 {
-    if (name.empty() || name == "__proto__" || name == "constructor" || name == "prototype" ||
-        name == "CanvasHost" || name == "storeAsGlobal" || name == "__canvas_host_control")
+    if (name.empty() || std::ranges::contains(kReservedGlobalNames, name))
     {
         throw std::runtime_error(std::format("canvas-host: invalid {}: {}", field, name));
     }

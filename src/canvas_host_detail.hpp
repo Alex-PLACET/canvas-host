@@ -7,6 +7,7 @@
 
 #include <canvas_host/canvas_host.hpp>
 
+#include <array>
 #include <cstddef>
 #include <string>
 #include <string_view>
@@ -53,6 +54,12 @@ inline constexpr const char* kEventTooLargeError = "canvas-host: event buffer is
 inline constexpr const char* kStatusStyle = "font-family:sans-serif;font-size:12px;color:#8a8aa0;"
                                             "margin:4px 0 10px 0;";
 inline constexpr const char* kErrorColor = "#ff7070";
+inline constexpr std::array<std::string_view, 6> kReservedGlobalNames = {"__proto__",
+                                                                         "constructor",
+                                                                         "prototype",
+                                                                         "CanvasHost",
+                                                                         "storeAsGlobal",
+                                                                         "__canvas_host_control"};
 inline constexpr const char* kCanvasContainerStyle =
     "max-width:100%;overflow-x:auto;overflow-y:hidden;";
 inline constexpr const char* kCanvasStyleTail = "px;display:block;box-shadow:0 0 0 1px #3a3a52;"

@@ -9,8 +9,12 @@
 
 #include <nlohmann/json.hpp>
 
+#include <algorithm>
 #include <cstring>
 #include <exception>
+#include <iterator>
+#include <ranges>
+#include <span>
 #include <stdexcept>
 #include <string>
 
@@ -258,9 +262,10 @@ canvas_host::MainConfig make_main_config(const canvas_host_main_config* config)
 
     if (config->start_args)
     {
-        for (size_t i = 0; i < config->start_args_count; ++i)
+        const std::span<const char* const> values{config->start_args, config->start_args_count};
+        for (const std::size_t i : std::views::iota(std::size_t{0}, values.size()))
         {
-            const char* value = config->start_args[i];
+            const char* value = values[i];
             try
             {
                 result.start_args.push_back(nlohmann::json::parse(value ? value : "null"));
@@ -275,11 +280,11 @@ canvas_host::MainConfig make_main_config(const canvas_host_main_config* config)
 
     if (config->start_arg_types)
     {
-        for (size_t i = 0; i < config->start_arg_types_count; ++i)
-        {
-            result.start_arg_types.emplace_back(
-                config->start_arg_types[i] ? config->start_arg_types[i] : "");
-        }
+        const std::span<const char* const> types{config->start_arg_types,
+                                                 config->start_arg_types_count};
+        std::ranges::transform(types,
+                               std::back_inserter(result.start_arg_types),
+                               [](const char* value) { return std::string(value ? value : ""); });
     }
 
     if (config->options_json && *config->options_json)
