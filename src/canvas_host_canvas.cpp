@@ -97,7 +97,7 @@ double Canvas::device_pixel_ratio() const
 {
     const int width = pixel_width();
     return m_width > 0 && width > 0 ? static_cast<double>(width) / static_cast<double>(m_width)
-                                    : 1.0;
+                                    : detail::kDefaultDevicePixelRatio;
 }
 
 /**

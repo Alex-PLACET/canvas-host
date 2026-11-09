@@ -13,6 +13,9 @@ namespace canvas_host
 namespace
 {
 
+constexpr int kWebGL2MajorVersion = 2;
+constexpr int kWebGL2MinorVersion = 0;
+
 /**
  * @brief Write a diagnostic message to the canvas log stream.
  * @param canvas Canvas whose log stream should receive the message.
@@ -55,8 +58,8 @@ int create_webgl2_context(const Canvas& canvas,
     attributes.antialias = antialias;
     attributes.premultipliedAlpha = false;
     attributes.preserveDrawingBuffer = preserve_drawing_buffer;
-    attributes.majorVersion = 2;
-    attributes.minorVersion = 0;
+    attributes.majorVersion = kWebGL2MajorVersion;
+    attributes.minorVersion = kWebGL2MinorVersion;
 
     const EMSCRIPTEN_WEBGL_CONTEXT_HANDLE context =
         emscripten_webgl_create_context("#canvas", &attributes);

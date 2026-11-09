@@ -50,6 +50,7 @@ constexpr const char* kInvalidOptionsPrefix = "canvas-host: invalid options_json
 constexpr const char* kStartArgsMismatchError =
     "canvas-host: start_args and start_arg_types must have the same length";
 constexpr const char* kOptionsObjectError = "canvas-host: options_json must be a JSON object";
+constexpr double kDefaultDevicePixelRatio = 1.0;
 
 /**
  * @brief Add the canvas-host prefix once.
@@ -448,7 +449,7 @@ int canvas_host_pixel_height(const canvas_host_canvas* canvas)
  */
 double canvas_host_device_pixel_ratio(const canvas_host_canvas* canvas)
 {
-    return canvas ? canvas->canvas.device_pixel_ratio() : 1.0;
+    return canvas ? canvas->canvas.device_pixel_ratio() : kDefaultDevicePixelRatio;
 }
 
 /**

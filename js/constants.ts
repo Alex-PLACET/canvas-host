@@ -14,6 +14,13 @@ namespace CanvasHostRuntime {
     export const MODE_WORKER = "worker";
     export const STORE_AS_GLOBAL = "storeAsGlobal";
 
+    export const DEFAULT_APP_GLOBAL = "__canvas_host_app";
+    export const DEFAULT_DEVICE_PIXEL_RATIO = 1;
+    export const MIN_CSS_DIMENSION = 1;
+    export const CANVAS_TAB_INDEX = 0;
+    export const STATUS_COLOR = "#8a8aa0";
+    export const ERROR_COLOR = "#ff7070";
+
     export const ERROR_GLOBAL = "__canvas_host_error_";
     export const READY_GLOBAL = "__canvas_host_ready_";
     export const PIXEL_WIDTH_GLOBAL = "__canvas_host_pixel_width_";

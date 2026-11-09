@@ -21,8 +21,8 @@ namespace CanvasHostRuntime {
             event: MouseEvent | PointerEvent | WheelEvent
         ): Record<string, number> => {
             const rect = canvas.getBoundingClientRect();
-            const cssWidth = Math.max(1, rect.width);
-            const cssHeight = Math.max(1, rect.height);
+            const cssWidth = Math.max(MIN_CSS_DIMENSION, rect.width);
+            const cssHeight = Math.max(MIN_CSS_DIMENSION, rect.height);
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
             return {

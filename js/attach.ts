@@ -114,7 +114,7 @@ namespace CanvasHostRuntime {
         }
         instance.app = app;
         ensureOpen(instance);
-        instance.appGlobal = config.appGlobal || "__canvas_host_app";
+        instance.appGlobal = config.appGlobal || DEFAULT_APP_GLOBAL;
         setGlobal(instance.appGlobal, instance.app);
 
         if (config.controlHandler) {
@@ -170,7 +170,9 @@ namespace CanvasHostRuntime {
         }
         const canvas = element as HTMLCanvasElement;
 
-        const dpr = config.hidpi === false ? 1 : (root.devicePixelRatio || 1);
+        const dpr = config.hidpi === false
+            ? DEFAULT_DEVICE_PIXEL_RATIO
+            : (root.devicePixelRatio || DEFAULT_DEVICE_PIXEL_RATIO);
         const { width, height } = config;
         const pixelWidth = Math.round(width * dpr);
         const pixelHeight = Math.round(height * dpr);
@@ -182,7 +184,7 @@ namespace CanvasHostRuntime {
         });
         canvas.width = pixelWidth;
         canvas.height = pixelHeight;
-        canvas.tabIndex = 0;
+        canvas.tabIndex = CANVAS_TAB_INDEX;
 
         const previous = instances.get(id);
         if (previous) {

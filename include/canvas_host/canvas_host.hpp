@@ -337,8 +337,8 @@ private:
     Mode m_mode = Mode::WorkerOffscreen;     /**< Hosting mode. */
     std::string m_id;                        /**< Canvas ID. */
     std::string m_global_name;               /**< Worker global name. */
-    int m_width = 900;                       /**< CSS width. */
-    int m_height = 600;                      /**< CSS height. */
+    int m_width = default_canvas_width;      /**< CSS width. */
+    int m_height = default_canvas_height;    /**< CSS height. */
     bool m_hidpi = true;                     /**< Whether the backing store is HiDPI. */
     std::ostream* m_log_stream = &std::cerr; /**< Stream for diagnostics, or nullptr. */
     std::string m_events_path;               /**< Event queue path, set by start_events(). */

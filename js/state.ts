@@ -14,7 +14,7 @@ namespace CanvasHostRuntime {
             return;
         }
         element.textContent = text;
-        element.style.color = isError ? "#ff7070" : "#8a8aa0";
+        element.style.color = isError ? ERROR_COLOR : STATUS_COLOR;
     }
 
     export function setError(id: string, error: unknown): void {

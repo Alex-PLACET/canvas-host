@@ -41,6 +41,13 @@ inline constexpr const char* kStartArgsMismatchError =
     "canvas-host: start_args and start_arg_types must have the same length";
 inline constexpr const char* kInvalidEventJsonPrefix = "canvas-host: invalid event JSON: ";
 inline constexpr std::size_t kMaxEventQueueBytes = 1024 * 1024;
+inline constexpr int kStatusChannelCloseDelayMs = 100;
+inline constexpr double kDefaultDevicePixelRatio = 1.0;
+inline constexpr unsigned char kUtf8LeadByte = 0xE2;
+inline constexpr unsigned char kUtf8ContinuationByte = 0x80;
+inline constexpr unsigned char kUtf8LineSeparator = 0xA8;
+inline constexpr unsigned char kUtf8ParagraphSeparator = 0xA9;
+inline constexpr std::size_t kUtf8SequenceTail = 2;
 inline constexpr const char* kNotReadyError =
     "canvas-host: the canvas is not ready yet. "
     "Run the attach cell, wait for the output to render, then run "
@@ -49,6 +56,7 @@ inline constexpr const char* kWorkerOnlyError = "canvas-host: register_canvas is
 inline constexpr const char* kEventTooLargeError = "canvas-host: event buffer is too small";
 inline constexpr const char* kStatusStyle = "font-family:sans-serif;font-size:12px;color:#8a8aa0;"
                                             "margin:4px 0 10px 0;";
+inline constexpr const char* kErrorColor = "#ff7070";
 inline constexpr const char* kCanvasContainerStyle =
     "max-width:100%;overflow-x:auto;overflow-y:hidden;";
 inline constexpr const char* kCanvasStyleTail = "px;display:block;box-shadow:0 0 0 1px #3a3a52;"

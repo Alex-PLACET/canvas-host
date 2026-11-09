@@ -93,13 +93,14 @@ std::string json_for_script(const nl::json& value)
         {
             result += "\\u003c";
         }
-        else if (c == 0xE2 && i + 2 < text.size() &&
-                 static_cast<unsigned char>(text[i + 1]) == 0x80 &&
-                 (static_cast<unsigned char>(text[i + 2]) == 0xA8 ||
-                  static_cast<unsigned char>(text[i + 2]) == 0xA9))
+        else if (c == kUtf8LeadByte && i + kUtf8SequenceTail < text.size() &&
+                 static_cast<unsigned char>(text[i + 1]) == kUtf8ContinuationByte &&
+                 (static_cast<unsigned char>(text[i + 2]) == kUtf8LineSeparator ||
+                  static_cast<unsigned char>(text[i + 2]) == kUtf8ParagraphSeparator))
         {
-            result += static_cast<unsigned char>(text[i + 2]) == 0xA8 ? "\\u2028" : "\\u2029";
-            i += 2;
+            result += static_cast<unsigned char>(text[i + 2]) == kUtf8LineSeparator ? "\\u2028"
+                                                                                    : "\\u2029";
+            i += kUtf8SequenceTail;
         }
         else
         {
@@ -319,11 +320,11 @@ std::string bootstrap_script(const nl::json& config, std::string_view id, std::s
         try {{
             var statusChannel = new BroadcastChannel('canvas-host-status');
             statusChannel.postMessage({{target: {4}, type: 'error', message: String(error)}});
-            setTimeout(function() {{ statusChannel.close(); }}, 100);
+            setTimeout(function() {{ statusChannel.close(); }}, {5});
         }} catch (ignored) {{}}
         if (status) {{
             status.textContent = 'Canvas failed: ' + error;
-            status.style.color = '#ff7070';
+            status.style.color = {6};
         }}
         console.error(error);
     }}
@@ -334,7 +335,9 @@ std::string bootstrap_script(const nl::json& config, std::string_view id, std::s
         loader,
         config_text,
         js_quote(error_name),
-        js_quote(id));
+        js_quote(id),
+        kStatusChannelCloseDelayMs,
+        js_quote(kErrorColor));
 
     return runtime + attach_script;
 }
