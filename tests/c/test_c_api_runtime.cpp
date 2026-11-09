@@ -9,6 +9,7 @@
 #include <array>
 #include <cstdio>
 #include <cstring>
+#include <format>
 #include <string>
 
 extern "C"
@@ -27,7 +28,7 @@ TEST_CASE("C API manages worker and main-thread canvases", "[canvas_host]")
 {
     canvas_host_worker_config worker = canvas_host_worker_config_default();
     canvas_host_main_config app = canvas_host_main_config_default();
-    std::array<char, 256> path{};
+    std::string path;
     std::array<char, 128> event{};
 
     worker.width = 800;
@@ -93,8 +94,8 @@ TEST_CASE("C API manages worker and main-thread canvases", "[canvas_host]")
     REQUIRE(contains(test_last_script(), "Module.FS.stat"));
     REQUIRE(contains(test_last_script(), "1048576"));
 
-    std::snprintf(path.data(), path.size(), "/tmp/canvas-host-events-%s", canvas_host_id(canvas));
-    FILE* file = std::fopen(path.data(), "wb");
+    path = std::format("/tmp/canvas-host-events-{}", canvas_host_id(canvas));
+    FILE* file = std::fopen(path.c_str(), "wb");
     REQUIRE(file != nullptr);
     std::fputs("{\"type\":\"pointerdown\"}\n{\"type\":\"pointerup\"}\n", file);
     std::fclose(file);
@@ -105,7 +106,7 @@ TEST_CASE("C API manages worker and main-thread canvases", "[canvas_host]")
     REQUIRE(std::strcmp(event.data(), "{\"type\":\"pointerup\"}") == 0);
     REQUIRE(canvas_host_poll_event(canvas, event.data(), event.size()) == 0);
 
-    file = std::fopen(path.data(), "wb");
+    file = std::fopen(path.c_str(), "wb");
     REQUIRE(file != nullptr);
     std::fputs("{\"type\":\"pointerdown\"}\n{\"type\":\"pointerup\"}\n", file);
     std::fclose(file);
@@ -116,7 +117,7 @@ TEST_CASE("C API manages worker and main-thread canvases", "[canvas_host]")
     REQUIRE(canvas_host_poll_event(canvas, event.data(), event.size()) == 1);
     REQUIRE(std::strcmp(event.data(), "{\"type\":\"pointerup\"}") == 0);
     REQUIRE(canvas_host_poll_event(canvas, event.data(), event.size()) == 0);
-    std::remove(path.data());
+    std::remove(path.c_str());
 
     test_script_int_result = 1;
     test_script_string_result = "deliberate JS error";
@@ -145,12 +146,12 @@ TEST_CASE("C API manages worker and main-thread canvases", "[canvas_host]")
     REQUIRE(contains(test_last_script(), "/tmp/canvas-host-events-c-worker"));
     REQUIRE(contains(test_last_script(), "/tmp/canvas-host-error-c-worker"));
 
-    file = std::fopen(path.data(), "wb");
+    file = std::fopen(path.c_str(), "wb");
     REQUIRE(file != nullptr);
     std::fputs("{\"type\":\"stale\"}\n", file);
     std::fclose(file);
     REQUIRE(canvas_host_poll_event(canvas, event.data(), event.size()) == 0);
-    std::remove(path.data());
+    std::remove(path.c_str());
     canvas_host_destroy(canvas);
 
     app.canvas_id = "c-app";
@@ -187,15 +188,14 @@ TEST_CASE("C API manages worker and main-thread canvases", "[canvas_host]")
     REQUIRE(canvas_host_pixel_width(main_canvas) == 900);
 
     test_script_int_result = 1;
-    std::snprintf(
-        path.data(), path.size(), "/tmp/canvas-host-error-%s", canvas_host_id(main_canvas));
-    file = std::fopen(path.data(), "wb");
+    path = std::format("/tmp/canvas-host-error-{}", canvas_host_id(main_canvas));
+    file = std::fopen(path.c_str(), "wb");
     REQUIRE(file != nullptr);
     std::fputs("deliberate error", file);
     std::fclose(file);
     REQUIRE(canvas_host_has_error(main_canvas));
     REQUIRE(std::strcmp(canvas_host_error(main_canvas), "canvas-host: deliberate error") == 0);
-    std::remove(path.data());
+    std::remove(path.c_str());
 
     canvas_host_destroy(main_canvas);
 }

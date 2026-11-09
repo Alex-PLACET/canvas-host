@@ -5,8 +5,6 @@
 
 #include <xeus/xinterpreter.hpp>
 
-#include <array>
-#include <cstdio>
 #include <cstring>
 #include <stdexcept>
 #include <string>
@@ -14,7 +12,7 @@
 namespace
 {
 
-std::array<char, 131072> g_last_script{};
+std::string g_last_script;
 std::string g_html;
 
 } // namespace
@@ -31,24 +29,21 @@ int test_webgl_make_current_result = EMSCRIPTEN_RESULT_SUCCESS;
 
 const char* test_last_html(void) { return g_html.c_str(); }
 
-const char* test_last_script(void) { return g_last_script.data(); }
+const char* test_last_script(void) { return g_last_script.c_str(); }
 
 void test_reset(void)
 {
-    g_last_script[0] = '\0';
+    g_last_script.clear();
     test_webgl_destroyed = 0;
 }
 
 double emscripten_get_now(void) { return 1234.0; }
 
-void emscripten_run_script(const char* script)
-{
-    std::snprintf(g_last_script.data(), g_last_script.size(), "%s", script ? script : "");
-}
+void emscripten_run_script(const char* script) { g_last_script = script ? script : ""; }
 
 int emscripten_run_script_int(const char* script)
 {
-    std::snprintf(g_last_script.data(), g_last_script.size(), "%s", script ? script : "");
+    g_last_script = script ? script : "";
     return test_script_int_result;
 }
 
