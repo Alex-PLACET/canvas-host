@@ -83,8 +83,7 @@ Canvas attach_main(MainConfig config)
     {
         throw std::runtime_error(detail::kInvalidOptionsError);
     }
-    if (!config.start_arg_types.empty() &&
-        config.start_arg_types.size() != config.start_args.size())
+    if (config.start_args.size() != config.start_arg_types.size())
     {
         throw std::runtime_error(detail::kStartArgsMismatchError);
     }

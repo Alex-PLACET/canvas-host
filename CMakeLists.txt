@@ -1,7 +1,7 @@
 # canvas-host: build, test, and install the C ABI, C++ headers, and browser runtime.
 
 cmake_minimum_required(VERSION 3.16)
-project(canvas-host VERSION 0.1.0 LANGUAGES C CXX)
+project(canvas-host VERSION 0.2.0 LANGUAGES C CXX)
 
 include(GNUInstallDirs)
 

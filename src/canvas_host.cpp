@@ -198,6 +198,14 @@ template <typename Target> void copy_string(Target& target, const char* value)
 template <typename Target, typename Source>
 void copy_canvas_config(Target& target, const Source& source)
 {
+    if (source.width < 0)
+    {
+        throw std::runtime_error("canvas-host: canvas width must be positive");
+    }
+    if (source.height < 0)
+    {
+        throw std::runtime_error("canvas-host: canvas height must be positive");
+    }
     if (source.width > 0) target.width = source.width;
     if (source.height > 0) target.height = source.height;
     copy_string(target.canvas_id, source.canvas_id);
@@ -289,8 +297,7 @@ canvas_host::MainConfig make_main_config(const canvas_host_main_config* config)
         }
     }
 
-    if (!result.start_arg_types.empty() &&
-        result.start_arg_types.size() != result.start_args.size())
+    if (result.start_arg_types.size() != result.start_args.size())
     {
         throw std::runtime_error(kStartArgsMismatchError);
     }
@@ -366,7 +373,22 @@ canvas_host_canvas* canvas_host_attach_main(const canvas_host_main_config* confi
 /**
  * @brief Release a C ABI canvas handle.
  */
-void canvas_host_destroy(canvas_host_canvas* canvas) { delete canvas; }
+void canvas_host_destroy(canvas_host_canvas* canvas)
+{
+    if (!canvas)
+    {
+        return;
+    }
+    try
+    {
+        canvas->canvas.stop();
+    }
+    catch (...)
+    {
+        // Destruction must not propagate cleanup failures.
+    }
+    delete canvas;
+}
 
 /**
  * @brief Return the last attach-level error.

@@ -22,7 +22,14 @@ void log_message(const Canvas& canvas, const char* message)
 {
     if (std::ostream* stream = canvas.log_stream())
     {
-        *stream << message << std::endl;
+        try
+        {
+            *stream << message << std::endl;
+        }
+        catch (...)
+        {
+            // Diagnostics must never change the outcome of the WebGL call.
+        }
     }
 }
 

@@ -86,15 +86,24 @@ std::string json_for_script(const nl::json& value)
     const std::string text = value.dump();
     std::string result;
     result.reserve(text.size());
-    for (const char c : text)
+    for (std::size_t i = 0; i < text.size(); ++i)
     {
+        const auto c = static_cast<unsigned char>(text[i]);
         if (c == '<')
         {
             result += "\\u003c";
         }
+        else if (c == 0xE2 && i + 2 < text.size() &&
+                 static_cast<unsigned char>(text[i + 1]) == 0x80 &&
+                 (static_cast<unsigned char>(text[i + 2]) == 0xA8 ||
+                  static_cast<unsigned char>(text[i + 2]) == 0xA9))
+        {
+            result += static_cast<unsigned char>(text[i + 2]) == 0xA8 ? "\\u2028" : "\\u2029";
+            i += 2;
+        }
         else
         {
-            result.push_back(c);
+            result.push_back(text[i]);
         }
     }
     return result;
@@ -176,7 +185,8 @@ std::string info_global(std::string_view id, std::string_view name)
  */
 void validate_global_name(std::string_view name, std::string_view field)
 {
-    if (name.empty() || name == "__proto__" || name == "constructor" || name == "prototype")
+    if (name.empty() || name == "__proto__" || name == "constructor" || name == "prototype" ||
+        name == "CanvasHost" || name == "storeAsGlobal" || name == "__canvas_host_control")
     {
         throw std::runtime_error(std::format("canvas-host: invalid {}: {}", field, name));
     }

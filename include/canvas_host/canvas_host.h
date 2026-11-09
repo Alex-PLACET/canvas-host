@@ -74,7 +74,8 @@ typedef struct canvas_host_main_config
     const char* start;             /**< Optional start function exported by the application. */
     const char* const* start_args; /**< Optional array of JSON values passed to start. */
     size_t start_args_count;       /**< Number of entries in start_args. */
-    const char* const* start_arg_types; /**< Optional array of Emscripten ccall argument types. */
+    const char* const* start_arg_types; /**< ccall argument types; required when start_args
+                                             is non-empty. */
     size_t start_arg_types_count;       /**< Number of entries in start_arg_types. */
     const char* start_return_type;      /**< Optional ccall return type; defaults to "number". */
     const char* control_handler;        /**< Optional global control-message handler. */
@@ -131,8 +132,8 @@ canvas_host_canvas* canvas_host_attach_main(const canvas_host_main_config* confi
 /**
  * @brief Destroy a canvas handle.
  *
- * Call canvas_host_stop() first to stop the application and close its
- * browser channels.
+ * Stops the application and closes its browser channels before releasing the
+ * handle.
  *
  * @param canvas Canvas handle to destroy. May be NULL.
  */

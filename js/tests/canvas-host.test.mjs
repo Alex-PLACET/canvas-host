@@ -63,6 +63,7 @@ class FakeCanvas extends FakeEventTarget {
     constructor(id, cssWidth = 100, cssHeight = 50) {
         super();
         this.id = id;
+        this.tagName = "CANVAS";
         this.style = {};
         this.width = 0;
         this.height = 0;
@@ -334,12 +335,14 @@ test("main attach resolves nested start args and stops the app", async () => {
         startArgs: ["${canvasId}", { size: "${width}x${height}" }],
         startArgTypes: ["string", "object"],
         appGlobal: "__test_app",
+        options: { theme: "dark", width: 999 },
         statusText: "App ready"
     });
 
     assert.deepEqual(started, [id, { size: "320x200" }]);
     assert.equal(globalThis.__test_app, CanvasHost.get(id).app);
     assert.equal(CanvasHost.get(id).app.options.width, 320);
+    assert.equal(CanvasHost.get(id).app.options.theme, "dark");
     assert.equal(statusText(id), "App ready");
 
     CanvasHost.stop(id);
@@ -418,6 +421,58 @@ test("stopping during attach cancels the pending app", async () => {
     });
 });
 
+test("worker canvases reject duplicate global names", async () => {
+    const first = "duplicate-global-a";
+    const second = "duplicate-global-b";
+    addCanvas(first);
+    addCanvas(second);
+    globalThis.storeAsGlobal = async (value, name) => {
+        globalThis[name] = value;
+    };
+
+    await CanvasHost.attach({
+        mode: "worker",
+        id: first,
+        globalName: "__duplicate_global",
+        width: 10,
+        height: 10
+    });
+
+    await assert.rejects(
+        CanvasHost.attach({
+            mode: "worker",
+            id: second,
+            globalName: "__duplicate_global",
+            width: 10,
+            height: 10
+        }),
+        /already in use/
+    );
+
+    CanvasHost.stop(first);
+    await waitFor(() => CanvasHost.get(first) === undefined);
+});
+
+test("main attach rejects a factory that returns no app", async () => {
+    await withSilencedErrors(async () => {
+        const id = "main-null-app";
+        addCanvas(id);
+        globalThis.__test_factory = () => null;
+
+        await assert.rejects(
+            CanvasHost.attach({
+                mode: "main",
+                id,
+                width: 10,
+                height: 10,
+                factory: "__test_factory"
+            }),
+            /must return an object/
+        );
+        assert.equal(CanvasHost.get(id), undefined);
+    });
+});
+
 test("attach validates configuration and reports failures", async () => {
     await withSilencedErrors(async () => {
     await assert.rejects(
@@ -446,6 +501,28 @@ test("attach validates configuration and reports failures", async () => {
             appGlobal: "__proto__"
         }),
         /appGlobal/
+    );
+    await assert.rejects(
+        CanvasHost.attach({
+            mode: "main",
+            id: "missing-types",
+            width: 1,
+            height: 1,
+            factory: "__test_factory",
+            start: "start",
+            startArgs: ["x"]
+        }),
+        /startArgTypes/
+    );
+    await assert.rejects(
+        CanvasHost.attach({
+            mode: "worker",
+            id: "reserved-worker-global",
+            width: 1,
+            height: 1,
+            globalName: "CanvasHost"
+        }),
+        /globalName/
     );
 
     const id = "no-store";

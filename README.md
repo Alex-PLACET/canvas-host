@@ -130,6 +130,9 @@ config.status_text = "My canvas";
 auto canvas = canvas_host::attach_worker(config);
 ```
 
+`Canvas` is move-only. Call `canvas.stop()` when you are done with it so the
+browser-side channels and globals are released.
+
 In a later cell, after the canvas has been transferred to the worker:
 
 ```cpp
@@ -220,10 +223,11 @@ if (result < 0) {
 empty, and `-1` on an invalid buffer or truncation. A truncated event is not
 consumed, so it can be read again with a larger buffer.
 
-Call `canvas_host_stop()` before `canvas_host_destroy()`:
+`canvas_host_destroy()` stops the canvas and closes its browser channels before
+releasing the handle. An explicit `canvas_host_stop()` is optional:
 
 ```c
-canvas_host_stop(canvas);
+canvas_host_stop(canvas); // optional
 canvas_host_destroy(canvas);
 ```
 

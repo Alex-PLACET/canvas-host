@@ -13,7 +13,11 @@ namespace CanvasHostRuntime {
     }
 
     export function deleteGlobal(name: string): void {
-        delete root[name];
+        try {
+            delete root[name];
+        } catch (ignored) {
+            // Cleanup must not fail because a host defined a non-configurable global.
+        }
     }
 
     export function validateDimension(value: number, name: string): void {

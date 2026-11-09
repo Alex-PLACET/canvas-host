@@ -10,6 +10,10 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
+
+static_assert(!std::is_copy_constructible_v<canvas_host::Canvas>);
+static_assert(std::is_move_constructible_v<canvas_host::Canvas>);
 
 extern "C"
 {
@@ -157,6 +161,13 @@ TEST_CASE("C++ wrapper manages a worker canvas", "[canvas_host]")
 
     const std::string escaped_js = canvas_host::detail::js_quote("a\"b\\c\n<");
     REQUIRE(escaped_js == "\"a\\\"b\\\\c\\n\\u003c\"");
+
+    const std::string separators = canvas_host::detail::js_quote("a"
+                                                                 "\xE2\x80\xA8"
+                                                                 "b"
+                                                                 "\xE2\x80\xA9"
+                                                                 "c");
+    REQUIRE(separators == "\"a\\u2028b\\u2029c\"");
 }
 
 TEST_CASE("C++ wrapper validates configuration and empty canvases", "[canvas_host]")
@@ -196,6 +207,9 @@ TEST_CASE("C++ wrapper validates configuration and empty canvases", "[canvas_hos
     REQUIRE_THROWS_AS(canvas_host::attach_main(app), std::runtime_error);
 
     app.start_arg_types = {};
+    REQUIRE_THROWS_AS(canvas_host::attach_main(app), std::runtime_error);
+
+    app.start_args = {};
     app.app_global = "__proto__";
     REQUIRE_THROWS_AS(canvas_host::attach_main(app), std::runtime_error);
 }

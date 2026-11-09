@@ -220,4 +220,22 @@ TEST_CASE("C API validates main-thread configuration", "[canvas_host]")
     app.start_arg_types_count = 2;
     REQUIRE(canvas_host_attach_main(&app) == nullptr);
     REQUIRE(contains(canvas_host_last_error(), "same length"));
+
+    app.start_arg_types = nullptr;
+    app.start_arg_types_count = 0;
+    REQUIRE(canvas_host_attach_main(&app) == nullptr);
+    REQUIRE(contains(canvas_host_last_error(), "same length"));
+}
+
+TEST_CASE("C API rejects invalid canvas dimensions", "[canvas_host]")
+{
+    canvas_host_worker_config worker = canvas_host_worker_config_default();
+    worker.width = -1;
+    REQUIRE(canvas_host_attach_worker(&worker) == nullptr);
+    REQUIRE(contains(canvas_host_last_error(), "width"));
+
+    worker = canvas_host_worker_config_default();
+    worker.height = -1;
+    REQUIRE(canvas_host_attach_worker(&worker) == nullptr);
+    REQUIRE(contains(canvas_host_last_error(), "height"));
 }

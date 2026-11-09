@@ -60,7 +60,8 @@ struct CanvasConfig
     std::string canvas_id;                         /**< Optional canvas ID; generated when empty. */
     std::string status_text = default_status_text; /**< Text shown below the canvas. */
     std::string js_path; /**< Optional external runtime URL; empty uses the embedded runtime. */
-    std::ostream* log_stream = &std::cerr; /**< Stream for diagnostics; nullptr disables logging. */
+    std::ostream* log_stream = &std::cerr; /**< Stream for diagnostics; not owned, must outlive
+                                               the Canvas. nullptr disables logging. */
 };
 
 /**
@@ -86,7 +87,8 @@ struct MainConfig : CanvasConfig
     std::string factory;              /**< Global factory function name. */
     std::string start;                /**< Optional start function exported by the application. */
     std::vector<nl::json> start_args; /**< Optional JSON values passed to start. */
-    std::vector<std::string> start_arg_types; /**< Optional Emscripten ccall argument types. */
+    std::vector<std::string> start_arg_types; /**< ccall argument types; required when
+                                                   start_args is non-empty. */
     std::string start_return_type = default_start_return_type; /**< ccall return type. */
     std::string control_handler; /**< Optional global control-message handler. */
     std::string on_start;        /**< Optional global callback invoked after start. */
@@ -113,10 +115,10 @@ std::string js_quote(std::string_view value);
 /**
  * @brief Handle to an attached canvas or main-thread application.
  *
- * Canvas objects are value types. Attach functions return a fully initialized
- * Canvas, and copying a Canvas copies its state. Copying a canvas after
- * start_events() makes both copies share the same event queue, so prefer moving
- * or keeping a single owner. Canvas operations are not thread-safe.
+ * Canvas objects are move-only. Attach functions return a fully initialized
+ * Canvas, and moving transfers ownership of its event-queue state. Call stop()
+ * before destroying a Canvas to release browser listeners and globals. Canvas
+ * operations are not thread-safe.
  */
 class Canvas
 {
@@ -125,6 +127,11 @@ public:
      * @brief Construct an empty, unattached Canvas.
      */
     Canvas() = default;
+
+    Canvas(const Canvas&) = delete;
+    Canvas& operator=(const Canvas&) = delete;
+    Canvas(Canvas&&) = default;
+    Canvas& operator=(Canvas&&) = default;
 
     /**
      * @brief Return the canvas hosting mode.
@@ -212,7 +219,8 @@ public:
 
     /**
      * @brief Return the stream used for diagnostic messages.
-     * @return The configured stream, or nullptr when logging is disabled.
+     * @return The configured stream, or nullptr when logging is disabled. The
+     *         stream is not owned and must outlive the Canvas.
      */
     std::ostream* log_stream() const;
 

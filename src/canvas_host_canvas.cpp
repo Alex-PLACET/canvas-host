@@ -263,13 +263,14 @@ void Canvas::start_events()
         channel.onmessage = function(event) {{
             var data = event.data || {{}};
             if (data.target && data.target !== {4}) return;
+            var line = JSON.stringify(data) + '\n';
             var size = 0;
             try {{ size = Module.FS.stat({3}).size; }} catch (e) {{}}
-            if (size >= {5}) return;
+            if (size + line.length >= {5}) return;
             try {{
                 Module.FS.writeFile(
                     {3},
-                    JSON.stringify(data) + '\n',
+                    line,
                     {{ flags: 'a' }}
                 );
             }} catch (e) {{}}
@@ -409,14 +410,28 @@ void Canvas::send(const nl::json& message) const
     {
         copy["target"] = m_id;
     }
+    const std::string error_name = detail::error_global(m_id);
+    const std::string error_file = detail::error_path(m_id);
     const std::string script = std::format(
-        R"JS(if (!globalThis.__canvas_host_control) {{
-    globalThis.__canvas_host_control = new BroadcastChannel('canvas-host-control');
-}}
-globalThis.__canvas_host_control.postMessage({0});
+        R"JS((function() {{
+    try {{
+        if (!globalThis.__canvas_host_control) {{
+            globalThis.__canvas_host_control = new BroadcastChannel('canvas-host-control');
+        }}
+        globalThis.__canvas_host_control.postMessage({0});
+        return 1;
+    }} catch (e) {{
+        var message = String(e);
+        globalThis[{1}] = message;
+        try {{ Module.FS.writeFile({2}, message); }} catch (ignored) {{}}
+        return 0;
+    }}
+}})()
 )JS",
-        detail::json_for_script(copy));
-    emscripten_run_script(script.c_str());
+        detail::json_for_script(copy),
+        detail::js_quote(error_name),
+        detail::js_quote(error_file));
+    run_script(script);
 }
 
 /**
@@ -429,7 +444,24 @@ void Canvas::stop()
         return;
     }
 
-    send(nl::json{{"type", "stop"}});
+    try
+    {
+        send(nl::json{{"type", "stop"}});
+    }
+    catch (const std::exception& error)
+    {
+        if (std::ostream* stream = m_log_stream)
+        {
+            try
+            {
+                *stream << error.what() << std::endl;
+            }
+            catch (...)
+            {
+                // Cleanup must not fail because the diagnostic stream failed.
+            }
+        }
+    }
 
     const std::string channel_name = std::string(detail::kEventChannelPrefix) + m_id;
     const std::string status_name = std::string(detail::kStatusChannelPrefix) + m_id;
@@ -448,6 +480,10 @@ void Canvas::stop()
     if (globalThis[{1}]) {{
         globalThis[{1}].close();
         delete globalThis[{1}];
+    }}
+    if (globalThis.__canvas_host_control) {{
+        globalThis.__canvas_host_control.close();
+        delete globalThis.__canvas_host_control;
     }}
     delete globalThis[{2}];
     delete globalThis[{3}];

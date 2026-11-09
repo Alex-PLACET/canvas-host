@@ -42,6 +42,9 @@ namespace CanvasHostRuntime {
     export const RESERVED_GLOBALS: ReadonlySet<string> = new Set([
         "__proto__",
         "constructor",
-        "prototype"
+        "prototype",
+        "CanvasHost",
+        "storeAsGlobal",
+        "__canvas_host_control"
     ]);
 }

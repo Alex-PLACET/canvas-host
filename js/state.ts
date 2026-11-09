@@ -62,7 +62,12 @@ namespace CanvasHostRuntime {
             channel?.close();
         }
         if (instance.globalName) {
-            deleteGlobal(instance.globalName);
+            const shared = [...instances.values()].some(other =>
+                other !== instance && other.globalName === instance.globalName
+            );
+            if (!shared) {
+                deleteGlobal(instance.globalName);
+            }
         }
         if (instance.appGlobal) {
             const shared = [...instances.values()].some(other =>

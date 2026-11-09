@@ -28,7 +28,7 @@ namespace CanvasHostRuntime {
         readonly start?: string;
         /** Values passed to the start function. */
         readonly startArgs?: readonly unknown[];
-        /** Emscripten ccall argument types. */
+        /** Emscripten ccall argument types; required when startArgs is non-empty. */
         readonly startArgTypes?: readonly string[];
         /** Emscripten ccall return type. */
         readonly startReturnType?: string;

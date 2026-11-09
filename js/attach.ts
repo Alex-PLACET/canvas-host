@@ -41,6 +41,10 @@ namespace CanvasHostRuntime {
             config.startArgTypes.length !== (config.startArgs?.length ?? 0)) {
             throw new Error("canvas-host: startArgs and startArgTypes must have the same length");
         }
+        if (!config.startArgTypes &&
+            (config.startArgs?.length ?? 0) > 0) {
+            throw new Error("canvas-host: startArgs require startArgTypes");
+        }
     }
 
     function ensureOpen(instance: CanvasHostInstance): void {
@@ -101,10 +105,14 @@ namespace CanvasHostRuntime {
         }
 
         const info = { canvas, canvasId: id, width, height, dpr };
-        instance.app = await (factory as AppFactory)({
-            ...info,
-            ...(config.options ?? {})
+        const app = await (factory as AppFactory)({
+            ...(config.options ?? {}),
+            ...info
         });
+        if (app === null || (typeof app !== "object" && typeof app !== "function")) {
+            throw new Error("application factory must return an object");
+        }
+        instance.app = app;
         ensureOpen(instance);
         instance.appGlobal = config.appGlobal || "__canvas_host_app";
         setGlobal(instance.appGlobal, instance.app);
@@ -156,10 +164,11 @@ namespace CanvasHostRuntime {
     export async function attach(config: CanvasHostConfig): Promise<CanvasHostHandle> {
         validateConfig(config);
         const { id } = config;
-        const canvas = document.getElementById(id) as HTMLCanvasElement | null;
-        if (!canvas) {
+        const element = document.getElementById(id);
+        if (!element || element.tagName?.toUpperCase() !== "CANVAS") {
             throw new Error(`canvas element not found: ${id}`);
         }
+        const canvas = element as HTMLCanvasElement;
 
         const dpr = config.hidpi === false ? 1 : (root.devicePixelRatio || 1);
         const { width, height } = config;
@@ -183,6 +192,17 @@ namespace CanvasHostRuntime {
                 setError(previous.id, error);
             }
             closeInstance(previous);
+        }
+
+        if (config.mode === MODE_WORKER && config.globalName) {
+            const conflict = [...instances.values()].find(
+                other => other.globalName === config.globalName
+            );
+            if (conflict) {
+                throw new Error(
+                    `canvas-host: globalName already in use: ${config.globalName}`
+                );
+            }
         }
 
         const instance: CanvasHostInstance = {
