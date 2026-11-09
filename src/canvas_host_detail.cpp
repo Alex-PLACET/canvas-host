@@ -59,6 +59,11 @@ std::string make_id(std::string_view prefix)
  */
 std::string html_escape(std::string_view text)
 {
+    if (text.find_first_of("&<>\"'") == std::string_view::npos)
+    {
+        return std::string(text);
+    }
+
     std::string result;
     result.reserve(text.size());
     for (const char c : text)
@@ -89,8 +94,13 @@ std::string html_escape(std::string_view text)
 std::string json_for_script(const nl::json& value)
 {
     const std::string text = value.dump(-1, ' ', true);
+    if (text.find('<') == std::string::npos)
+    {
+        return text;
+    }
+
     std::string result;
-    result.reserve(text.size());
+    result.reserve(text.size() + kJsLessThanEscape.size());
     for (const char c : text)
     {
         if (c == '<')
@@ -112,12 +122,26 @@ std::string json_for_script(const nl::json& value)
  */
 std::string read_file(const std::string& path)
 {
-    std::ifstream input(path, std::ios::binary);
+    std::ifstream input(path, std::ios::binary | std::ios::ate);
     if (!input)
     {
         return {};
     }
-    return std::string(std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>());
+    const std::streamoff end = input.tellg();
+    if (end <= 0)
+    {
+        return {};
+    }
+
+    std::string result;
+    result.resize_and_overwrite(static_cast<std::size_t>(end),
+                                [&](char* data, std::size_t size)
+                                {
+                                    input.seekg(0, std::ios::beg);
+                                    input.read(data, static_cast<std::streamsize>(size));
+                                    return static_cast<std::size_t>(input.gcount());
+                                });
+    return result;
 }
 
 /**

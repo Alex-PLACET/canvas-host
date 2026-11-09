@@ -321,12 +321,11 @@ bool Canvas::poll_event(std::string& line, std::size_t max_size)
         return false;
     }
 
-    std::ifstream input(m_events_path, std::ios::binary);
+    std::ifstream input(m_events_path, std::ios::binary | std::ios::ate);
     if (!input)
     {
         return false;
     }
-    input.seekg(0, std::ios::end);
     const std::streamoff end = input.tellg();
     if (end < 0)
     {

@@ -59,7 +59,7 @@ constexpr double kDefaultDevicePixelRatio = 1.0;
  */
 std::string prefixed_error(std::string_view message)
 {
-    if (message.rfind(kErrorPrefix, 0) == 0)
+    if (message.starts_with(kErrorPrefix))
     {
         return std::string(message);
     }
