@@ -5,6 +5,9 @@ set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${HERE}"
 
+CANVAS_HOST_ROOT="$(cd "${HERE}/../../.." && pwd)"
+export CANVAS_HOST_VERSION="$(<"${CANVAS_HOST_ROOT}/VERSION")"
+
 DEPS="${HERE}/.deps"
 SRC="${XEUS_CPP_SRC:-${DEPS}/xeus-cpp}"
 BUILD="${DEPS}/xeus-cpp-build"

@@ -1,7 +1,7 @@
 # Recipe for the canvas-host wasm package used by the JupyterLite example.
 
 context:
-  version: "0.2.0"
+  version: ${{ env.get("CANVAS_HOST_VERSION") }}
 
 package:
   name: canvas-host

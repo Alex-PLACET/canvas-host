@@ -91,6 +91,13 @@ Because `canvas_host_c` is compiled as C++ and links xeus, a C executable
 should use the C++ linker (`LINKER_LANGUAGE CXX`) or be linked from an existing
 C++ kernel target.
 
+### Versioning
+
+The top-level `VERSION` file is the single source of truth for the library
+version. CMake reads it, uses it for `project(... VERSION ...)`, and generates
+`canvas_host/version.h` from `cmake/version.h.in` in the build directory. Edit
+`VERSION` and rebuild; do not create or edit a version header in `include/`.
+
 ### Minification
 
 The browser runtime is compiled from TypeScript with `tsc`. The compiled
@@ -284,7 +291,7 @@ Library: `canvas_host_c`
   attached canvas.
 - The C and C++ APIs are not thread-safe; call them from the interpreter/worker
   thread that owns the Emscripten runtime.
-- Version macros are available in `canvas_host/version.h`.
+- Version macros are available in the generated `canvas_host/version.h`.
 
 ## Input events
 
@@ -375,9 +382,10 @@ committing.
 
 ```text
 canvas-host/
+├── VERSION                               # Single version source
 ├── include/canvas_host/canvas_host.h     # C17 API
 ├── include/canvas_host/canvas_host.hpp   # C++17 API
-├── include/canvas_host/version.h         # Version macros
+├── cmake/version.h.in                    # Generated version header template
 ├── cmake/canvas-host-js.cmake            # TypeScript compile/minify helper
 ├── cmake/canvas-host-config.cmake.in     # Installed package config template
 ├── cmake/canvas_host_js.hpp.in           # Embedded runtime header template

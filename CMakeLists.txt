@@ -1,9 +1,28 @@
 # canvas-host: build, test, and install the C ABI, C++ headers, and browser runtime.
 
 cmake_minimum_required(VERSION 3.16)
-project(canvas-host VERSION 0.2.0 LANGUAGES C CXX)
+
+set(CANVAS_HOST_VERSION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/VERSION")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CANVAS_HOST_VERSION_FILE}")
+
+file(STRINGS "${CANVAS_HOST_VERSION_FILE}" CANVAS_HOST_VERSION LIMIT_COUNT 1)
+string(STRIP "${CANVAS_HOST_VERSION}" CANVAS_HOST_VERSION)
+if(NOT CANVAS_HOST_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+    message(FATAL_ERROR
+        "canvas-host: VERSION must contain MAJOR.MINOR.PATCH, got '${CANVAS_HOST_VERSION}'"
+    )
+endif()
+project(canvas-host VERSION ${CANVAS_HOST_VERSION} LANGUAGES C CXX)
 
 include(GNUInstallDirs)
+
+set(CANVAS_HOST_GENERATED_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/include")
+file(MAKE_DIRECTORY "${CANVAS_HOST_GENERATED_INCLUDE_DIR}/canvas_host")
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.h.in"
+    "${CANVAS_HOST_GENERATED_INCLUDE_DIR}/canvas_host/version.h"
+    @ONLY
+)
 
 if(EMSCRIPTEN)
     set(CANVAS_HOST_BUILD_C_API_DEFAULT ON)
@@ -75,6 +94,7 @@ add_library(canvas_host::canvas_host ALIAS canvas_host)
 
 target_compile_features(canvas_host INTERFACE cxx_std_17)
 target_include_directories(canvas_host INTERFACE
+    $<BUILD_INTERFACE:${CANVAS_HOST_GENERATED_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
@@ -143,6 +163,9 @@ endif()
 
 install(TARGETS ${CANVAS_HOST_INSTALL_TARGETS} EXPORT canvas-host-targets)
 install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES "${CANVAS_HOST_GENERATED_INCLUDE_DIR}/canvas_host/version.h"
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/canvas_host
+)
 install(FILES LICENSE DESTINATION ${CMAKE_INSTALL_DATADIR}/canvas-host)
 
 if(CANVAS_HOST_BUILD_JS)

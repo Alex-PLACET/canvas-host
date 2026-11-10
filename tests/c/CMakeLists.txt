@@ -11,6 +11,7 @@ add_library(canvas_host_test_impl STATIC
 
 target_include_directories(canvas_host_test_impl
     PUBLIC
+        ${CANVAS_HOST_GENERATED_INCLUDE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../../include
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/fake_emscripten
