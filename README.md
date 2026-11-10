@@ -2,83 +2,86 @@
 
 A backend-agnostic canvas host for **xeus-cpp / JupyterLite**.
 
-`canvas-host` owns the browser-side canvas lifecycle and exposes a small C17
-and C++17 API to notebook cells. It does not initialize SDL, sokol, bgfx,
-raylib, ImGui, or any other renderer. Applications receive a canvas, a WebGL2
-context, and normalized input events, then drive their own renderer.
+`canvas-host` owns the browser-side canvas lifecycle and exposes a small C17 and C++17 API to
+notebook cells. It does not render anything itself: applications receive a canvas, a WebGL2 context,
+and normalized input events, then drive their own renderer.
 
 **Live demo:** [Open the WebGL notebook on GitHub Pages](https://alex-placet.github.io/canvas-host/lab/index.html?path=webgl.ipynb)
 
-## What it provides
+## What it handles
 
-- Emits a `<canvas>` in notebook output
-- Fixed CSS size with an optional HiDPI backing store
-- Unique canvas IDs for multiple canvases
-- Worker `OffscreenCanvas` transfer
-- Main-thread application hosting
-- Emscripten canvas registration
-- WebGL2 context creation
-- Normalized pointer, wheel, keyboard, focus, and blur events
-- Ready/error status and cleanup
+- **Canvas lifecycle.** The library emits the `<canvas>` into notebook output, generates unique IDs,
+  keeps CSS and backing-store sizes in sync, and releases browser channels and globals on stop.
+- **Two hosting modes.** A worker canvas is transferred to the kernel as an `OffscreenCanvas`; a
+  main-thread canvas stays in the page while a JavaScript application owns it. The kernel controls
+  both through the same C++ API.
+- **Graphics and input.** Worker canvases can be registered with Emscripten and turned into WebGL2
+  contexts. Pointer, wheel, keyboard, focus, and blur events are normalized into JSON and queued for
+  the kernel.
+- **Status reporting.** Readiness, geometry, and errors are exposed to the kernel without blocking the
+  interpreter thread.
 
 ## Requirements
 
-- Emscripten, xeus, and nlohmann_json to build `canvas_host_c`
-- A C++23 compiler for the implementation; public headers remain C++17-compatible
-- xeus-cpp with OffscreenCanvas/WebGL support for worker GL
-- JupyterLite + jupyterlite-xeus to run the example
-- micromamba and git to build the example kernel
-- Node.js 20 or newer and TypeScript 7.0.2 (`tsc`) to compile the browser runtime
-- Catch2 3 for the host C++ tests
-- An external JavaScript minifier when `CANVAS_HOST_MINIFIER` is not `OFF`
-  (default `auto`)
-- A kernel that installs the `include/canvas_host/` headers and links
-  `canvas_host_c`
+- **Emscripten, xeus, and nlohmann_json** to build the C ABI library (`canvas_host_c`).
+- **A C++23 compiler** for the implementation sources. The public headers remain C++17-compatible.
+- **xeus-cpp with OffscreenCanvas/WebGL support** (`XEUS_CPP_EMSCRIPTEN_WEBGL`) for worker-side
+  OpenGL.
+- **Node.js 20+ and TypeScript 7.0.2** to build the browser runtime. `npm ci` installs the pinned
+  compiler locally.
+- **Catch2 3** for the host test suite.
+- **JupyterLite and jupyterlite-xeus** to run the example notebook. The example section below points
+  to its additional tooling.
 
 Emscripten 4.0.9 and 6.0.8 are covered by CI.
 
-## Development environment
+## Build
 
-For host development and tests, create the conda-forge environment:
+### Host development
+
+The host configuration builds the C++ implementation and tests without Emscripten or the C ABI:
 
 ```bash
 mamba env create -f environment-dev.yml
 mamba activate canvas-host-dev
-(cd js && npm ci)
+npm --prefix js ci
 
-cmake -S . -B build-dev \
+cmake -S . -B build-dev -G Ninja \
   -DCANVAS_HOST_BUILD_TESTS=ON \
-  -DCANVAS_HOST_BUILD_C_API=OFF \
   -DCANVAS_HOST_BUILD_JS=ON \
   -DCANVAS_HOST_MINIFIER=OFF
 cmake --build build-dev
 ctest --test-dir build-dev --output-on-failure
 ```
 
-The environment includes Catch2, nlohmann_json, Node.js, esbuild, and
-clang-tools. `CANVAS_HOST_BUILD_C_API=OFF` is for the host build; the C ABI
-library itself is built with the Emscripten toolchain.
+`CANVAS_HOST_BUILD_JS=ON` adds the TypeScript runtime and its browser tests. Without it, CMake
+generates an empty runtime header, which is enough for C++-only host work but skips the JavaScript
+runtime tests.
 
-`CANVAS_HOST_BUILD_JS=OFF` skips TypeScript and minifier requirements and
-generates an empty runtime header, which is enough for C++-only host tests.
-Use `CANVAS_HOST_BUILD_JS=ON` to run the browser runtime tests through CTest.
-`CANVAS_HOST_SANITIZE=ON` enables ASan/UBSan for the host tests.
+### Emscripten build
 
-## Build
-
-The C ABI library is enabled by default under the Emscripten toolchain:
+Under Emscripten, the C ABI and browser runtime are enabled by default:
 
 ```bash
-(cd js && npm ci)
-emcmake cmake -S . -B build \
-  -DCANVAS_HOST_BUILD_C_API=ON \
-  -DCANVAS_HOST_BUILD_JS=ON
+npm --prefix js ci
+emcmake cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 
-`npm ci` installs the TypeScript compiler locally; CMake also finds a global
-`tsc` in `PATH`. Emscripten builds do not build or run the host tests; use a
-separate host configuration for `ctest`.
+CMake uses the local TypeScript compiler from `js/node_modules/.bin` when available and falls back
+to `tsc` in `PATH`. If no supported minifier is installed, pass `-DCANVAS_HOST_MINIFIER=OFF`.
+
+### Build options
+
+| Option | Default | Purpose |
+| --- | --- | --- |
+| `CANVAS_HOST_BUILD_C_API` | ON with Emscripten, OFF otherwise | Builds `canvas_host_c`; requires the JavaScript runtime. |
+| `CANVAS_HOST_BUILD_JS` | Follows `CANVAS_HOST_BUILD_C_API` | Compiles and embeds the TypeScript runtime. |
+| `CANVAS_HOST_MINIFIER` | `auto` | `auto` selects terser/esbuild; `OFF` embeds the unminified runtime. |
+| `CANVAS_HOST_BUILD_TESTS` | OFF | Builds the Catch2 host tests. Emscripten builds ignore this option. |
+| `CANVAS_HOST_SANITIZE` | OFF | Enables ASan/UBSan for the host tests. |
+
+### Installed package
 
 C and C++ consumers link the exported target:
 
@@ -87,44 +90,23 @@ find_package(canvas-host CONFIG REQUIRED)
 target_link_libraries(my_kernel PRIVATE canvas_host::canvas_host_c)
 ```
 
-Because `canvas_host_c` is compiled as C++ and links xeus, a C executable
-should use the C++ linker (`LINKER_LANGUAGE CXX`) or be linked from an existing
-C++ kernel target.
+`canvas_host_c` is compiled as C++ and links xeus. A C executable should therefore use the C++
+linker (`LINKER_LANGUAGE CXX`) or link through an existing C++ kernel target.
 
 ### Versioning
 
-The top-level `VERSION` file is the single source of truth for the library
-version. CMake reads it, uses it for `project(... VERSION ...)`, and generates
-`canvas_host/version.h` from `cmake/version.h.in` in the build directory. Edit
-`VERSION` and rebuild; do not create or edit a version header in `include/`.
+The top-level `VERSION` file is the only version source. CMake uses it for the project version and
+generates `canvas_host/version.h` from `cmake/version.h.in` in the build directory. The generated
+header is installed with the public headers; edit `VERSION` and rebuild rather than editing a
+version header.
 
-### Minification
+## Using the C++ API
 
-The browser runtime is compiled from TypeScript with `tsc`. The compiled
-modules are concatenated into one runtime bundle, then embedded into
-`canvas_host_c` at build time. `CANVAS_HOST_MINIFIER` controls minification:
+The public header is `include/canvas_host/canvas_host.hpp`; its comments document every field and
+method. The typical worker flow has two steps because the browser transfers the canvas
+asynchronously.
 
-- `CANVAS_HOST_MINIFIER=auto` (default) uses `terser` or `esbuild`
-- `CANVAS_HOST_MINIFIER=terser|esbuild` selects one explicitly
-- `CANVAS_HOST_MINIFIER=OFF` embeds the unminified compiled runtime
-
-If minification is enabled and no supported tool is installed, CMake fails
-with an explicit error. There is no bundled minifier.
-
-`CANVAS_HOST_BUILD_JS=OFF` skips TypeScript/minification and generates an
-empty runtime header. It is intended for header installation and C++-only host
-tests; `CANVAS_HOST_BUILD_C_API=ON` requires the runtime and therefore requires
-`CANVAS_HOST_BUILD_JS=ON`. When the runtime is built, CMake installs both the
-unminified `canvas-host.js` and, when enabled, `canvas-host.min.js`.
-
-```bash
-# Example: use an installed terser
-emcmake cmake -S . -B build \
-  -DCANVAS_HOST_BUILD_C_API=ON \
-  -DCANVAS_HOST_MINIFIER=terser
-```
-
-## C++ quick start
+Attach the canvas from one cell:
 
 ```cpp
 #include <canvas_host/canvas_host.hpp>
@@ -137,10 +119,7 @@ config.status_text = "My canvas";
 auto canvas = canvas_host::attach_worker(config);
 ```
 
-`Canvas` is move-only. Call `canvas.stop()` when you are done with it so the
-browser-side channels and globals are released.
-
-In a later cell, after the canvas has been transferred to the worker:
+Once the output has rendered, use the canvas from a later cell:
 
 ```cpp
 canvas.require_ready();
@@ -148,7 +127,6 @@ canvas.require_ready();
 int context = canvas_host::create_webgl2_context(canvas);
 int width = canvas.pixel_width();
 int height = canvas.pixel_height();
-double dpr = canvas.device_pixel_ratio();
 
 canvas.start_events();
 
@@ -157,18 +135,35 @@ while (canvas.poll_event(event)) {
     const std::string type = event.value("type", std::string());
     // Update application state from the normalized event.
 }
-```
 
-Stop the loop and release the canvas:
-
-```cpp
 canvas.stop();
 ```
 
-## Logging
+`require_ready()` does not wait. It throws until the transfer or initialization has completed, which
+makes it safe to rerun the cell.
 
-Library diagnostics, such as WebGL context creation failures, are written to a
-configurable `std::ostream`. The default is `std::cerr`:
+For a main-thread application, use `canvas_host::MainConfig` instead. The factory is loaded from
+`script`, the canvas and geometry information are passed to it, and `start` can invoke an exported
+application function:
+
+```cpp
+canvas_host::MainConfig app;
+app.script = "/files/app.js";
+app.factory = "createApp";
+app.start = "app_start";
+app.start_args = {"${canvasId}", 900};
+app.start_arg_types = {"string", "number"};
+
+auto canvas = canvas_host::attach_main(app);
+```
+
+`options` are merged into the factory arguments, `control_handler` receives messages sent with
+`Canvas::send()`, and `on_start` runs after the start function. See the header for the remaining
+fields.
+
+### Logging
+
+Diagnostics go to `config.log_stream`, which defaults to `std::cerr`:
 
 ```cpp
 #include <sstream>
@@ -177,125 +172,55 @@ std::ostringstream log;
 config.log_stream = &log;
 
 auto canvas = canvas_host::attach_worker(config);
-
-// Later:
-// log.str() contains canvas-host diagnostics.
+// log.str() now contains canvas-host diagnostics.
 ```
 
-Set `config.log_stream = nullptr` to disable diagnostic output. The stream must
-outlive the `Canvas` object.
-
-See `examples/jupyterlite/webgl` for a complete WebGL2 setup with a render loop
-and pointer/keyboard handling.
+Set `config.log_stream = nullptr` to disable logging. The stream is not owned and must outlive the
+`Canvas`.
 
 ## C17 API
 
-`include/canvas_host/canvas_host.h` is valid C17 and C++. It exposes an opaque
-`canvas_host_canvas*` handle:
+`include/canvas_host/canvas_host.h` is valid C17 and C++. It exposes an opaque handle and is
+implemented as an `extern "C"` adapter over the same C++ code. A minimal attach and event loop looks
+like this:
 
 ```c
 #include <canvas_host/canvas_host.h>
 #include <stdio.h>
 
-void attach_canvas(void)
-{
-    canvas_host_worker_config config = canvas_host_worker_config_default();
-    config.width = 640;
-    config.height = 400;
+canvas_host_worker_config config = canvas_host_worker_config_default();
+config.width = 640;
+config.height = 400;
 
-    canvas_host_canvas* canvas = canvas_host_attach_worker(&config);
-    if (canvas == NULL) {
-        fprintf(stderr, "%s\n", canvas_host_last_error());
-        return;
-    }
+canvas_host_canvas* canvas = canvas_host_attach_worker(&config);
+if (canvas == NULL) {
+    fprintf(stderr, "%s\n", canvas_host_last_error());
+    return;
 }
-```
 
-Drain events with `canvas_host_poll_event()`:
-
-```c
 char buffer[4096];
 int result;
-
 while ((result = canvas_host_poll_event(canvas, buffer, sizeof(buffer))) == 1) {
     printf("%s\n", buffer);
 }
-
 if (result < 0) {
     fprintf(stderr, "%s\n", canvas_host_error(canvas));
 }
-```
 
-`canvas_host_poll_event()` returns `1` for an event, `0` when the queue is
-empty, and `-1` on an invalid buffer or truncation. A truncated event is not
-consumed, so it can be read again with a larger buffer.
-
-`canvas_host_destroy()` stops the canvas and closes its browser channels before
-releasing the handle. An explicit `canvas_host_stop()` is optional:
-
-```c
-canvas_host_stop(canvas); // optional
 canvas_host_destroy(canvas);
 ```
 
-## API summary
+`canvas_host_poll_event()` returns `1` for an event, `0` when the queue is empty, and `-1` for an
+invalid buffer, a truncation, or an internal error. A truncated event is not consumed, so it can be
+retried with a larger buffer.
 
-### C17
-
-Header: `include/canvas_host/canvas_host.h`
-Library: `canvas_host_c` (`canvas_host::canvas_host_c` in CMake)
-
-- Config defaults: `canvas_host_worker_config_default()`,
-  `canvas_host_main_config_default()`
-- Attach/destroy: `canvas_host_attach_worker()`,
-  `canvas_host_attach_main()`, `canvas_host_destroy()`
-- Status: `canvas_host_ready()`, `canvas_host_has_error()`,
-  `canvas_host_error()`, `canvas_host_last_error()`
-- Geometry: `canvas_host_width()`, `canvas_host_height()`,
-  `canvas_host_pixel_width()`, `canvas_host_pixel_height()`,
-  `canvas_host_device_pixel_ratio()`
-- Graphics: `canvas_host_register_canvas()`,
-  `canvas_host_create_webgl2_context()`,
-  `canvas_host_destroy_webgl2_context()`
-- Events: `canvas_host_start_events()`, `canvas_host_poll_event()`
-- Control: `canvas_host_send_json()`, `canvas_host_stop()`
-
-### C++
-
-Header: `include/canvas_host/canvas_host.hpp`
-Library: `canvas_host_c`
-
-- `attach_worker(config)`, `attach_main(config)`
-- `Canvas::ready()`, `require_ready()`, `has_error()`, `error()`
-- `Canvas::log_stream()`
-- `Canvas::id()`, `global_name()`, `width()`, `height()`,
-  `pixel_width()`, `pixel_height()`, `device_pixel_ratio()`
-- `Canvas::register_canvas()`, `create_webgl2_context(canvas)`,
-  `destroy_webgl2_context(handle)`
-- `Canvas::start_events()`, `poll_event(line)`,
-  `poll_event(line, max_size)`, `poll_event(nl::json&)`
-- `Canvas::send(nl::json)`, `stop()`
-
-## Behavior and limits
-
-- `attach_worker()` requires positive `width` and `height`; `attach_main()`
-  also requires a non-empty `factory` and a JSON-object `options`.
-- `start_args` and `start_arg_types` must have the same length when types are
-  supplied.
-- `require_ready()` throws until the browser has transferred or initialized the
-  canvas; it does not block or wait.
-- Input events are queued in the Emscripten filesystem. The queue is capped at
-  1 MiB; new events are dropped while the queue is full. Poll events regularly
-  to avoid losing input.
-- `Canvas::send()` and `canvas_host_send_json()` require a JSON object and an
-  attached canvas.
-- The C and C++ APIs are not thread-safe; call them from the interpreter/worker
-  thread that owns the Emscripten runtime.
-- Version macros are available in the generated `canvas_host/version.h`.
+`canvas_host_last_error()` reports attach failures; `canvas_host_error(handle)` reports errors for a
+specific canvas. Geometry, WebGL, control-message, stop, and readiness functions mirror the C++ API.
+Their contracts are documented in the header.
 
 ## Input events
 
-Events are JSON objects:
+Events are JSON objects. A pointer event looks like this:
 
 ```json
 {
@@ -320,102 +245,63 @@ Events are JSON objects:
 }
 ```
 
-Event types include `pointerdown`, `pointermove`, `pointerup`,
-`pointercancel`, `wheel`, `keydown`, `keyup`, `keypress`, `focus`, and `blur`.
-Keyboard events include `key`, `code`, `keyCode`, and `repeat`. Wheel events
-include `dx`, `dy`, and `deltaMode`.
+All events carry `target`, `type`, and `eventTime`; the target identifies the canvas when several
+are active. Pointer and wheel events include CSS and device coordinates plus the canvas geometry.
+Keyboard events add `key`, `code`, `keyCode`, and `repeat`; wheel events add `dx`, `dy`, and
+`deltaMode`; keypress events also include `charCode`. Supported types are `pointerdown`,
+`pointermove`, `pointerup`, `pointercancel`, `wheel`, `keydown`, `keyup`, `keypress`, `focus`, and
+`blur`.
 
 `eventTime` is the DOM capture time in epoch milliseconds
 (`performance.timeOrigin + performance.now()`).
 
-## Example
+## Behavior and limits
 
-`examples/jupyterlite/webgl` is the reference WebGL2 example: it attaches a
-worker canvas, creates a WebGL2 context, polls pointer and keyboard events, and
-draws a simple full-screen shader.
+- `attach_worker()` and `attach_main()` require positive canvas dimensions. `attach_main()` also
+  requires a factory and a JSON-object `options` value.
+- `start_args` and `start_arg_types` must have the same length. Strings in `start_args` can
+  interpolate `${canvasId}`, `${width}`, `${height}`, and `${dpr}`.
+- Input events are queued in the Emscripten filesystem. The queue is capped at 1 MiB; new events are
+  dropped while it is full, so poll regularly.
+- `Canvas::send()` and `canvas_host_send_json()` require a JSON object and an attached canvas.
+- The C and C++ APIs are not thread-safe. Call them from the interpreter/worker thread that owns the
+  Emscripten runtime.
 
-For the pinned xeus-cpp kernel, environment setup, build/serve commands, and
-prefix reuse instructions, see
-[`examples/jupyterlite/webgl/README.md`](examples/jupyterlite/webgl/README.md).
+## Development checks
 
-## Tests
+The host configuration above registers the C API test, the C++ wrapper test, and an
+installed-package consumer test with CTest. The browser runtime tests are included when the runtime
+is part of the build.
 
-On the host, the test targets compile the C++ implementation and C ABI adapter
-against fake Emscripten and xeus headers. Both the C API and C++ wrapper tests
-use Catch2 3. The suite also installs the package and builds a minimal
-`find_package(canvas-host)` consumer, and runs the TypeScript runtime tests when
-Node.js is available:
-
-```bash
-cmake -S . -B build \
-  -DCANVAS_HOST_BUILD_TESTS=ON \
-  -DCANVAS_HOST_BUILD_C_API=OFF \
-  -DCANVAS_HOST_BUILD_JS=ON \
-  -DCANVAS_HOST_MINIFIER=OFF \
-  -DCMAKE_PREFIX_PATH="/path/to/catch2;/path/to/nlohmann_json"
-cmake --build build
-ctest --test-dir build --output-on-failure
-```
-
-Run the browser runtime tests directly with:
+Run the JavaScript tests directly with:
 
 ```bash
-(cd js && npm ci && npm test)
+npm --prefix js test
 ```
 
-Tests are host-only; Emscripten builds do not build test executables. Use
-`-DCANVAS_HOST_SANITIZE=ON` to enable ASan/UBSan on the host tests.
+Enable ASan/UBSan by adding `-DCANVAS_HOST_SANITIZE=ON` to the host configuration. C/C++ sources are
+formatted with the checked-in `.clang-format`; apply `clang-format` to `include/`, `src/`, and
+`tests/` before committing.
 
-## CI
+CI runs the host tests, formatting and TypeScript type checks, and Emscripten builds for 4.0.9 and
+6.0.8. The separate Pages workflow builds and deploys the WebGL example.
 
-GitHub Actions runs the host test suite, formatting and TypeScript type checks,
-and Emscripten builds with 4.0.9 and 6.0.8. The dedicated Pages workflow deploys
-the WebGL example; see its README for details.
+## JupyterLite example
 
-## Formatting
+[`examples/jupyterlite/webgl`](examples/jupyterlite/webgl) is the reference example. It builds the
+pinned xeus-cpp WebGL kernel, packages canvas-host as a local wasm dependency, and produces a
+JupyterLite site with a render loop, pointer input, and keyboard input. Its README covers the
+required environments, build commands, and local serving instructions.
 
-C/C++ sources are formatted with `clang-format` using the checked-in
-`.clang-format` rules. Apply them to `include/`, `src/`, and `tests/` before
-committing.
+## Project layout
 
-## Repository layout
-
-```text
-canvas-host/
-├── VERSION                               # Single version source
-├── include/canvas_host/canvas_host.h     # C17 API
-├── include/canvas_host/canvas_host.hpp   # C++17 API
-├── cmake/version.h.in                    # Generated version header template
-├── cmake/canvas-host-js.cmake            # TypeScript compile/minify helper
-├── cmake/canvas-host-config.cmake.in     # Installed package config template
-├── cmake/canvas_host_js.hpp.in           # Embedded runtime header template
-├── src/canvas_host.cpp                   # C ABI adapter
-├── src/canvas_host_detail.cpp            # Escaping, files, HTML, status listener
-├── src/canvas_host_canvas.cpp            # Canvas state, events, control, cleanup
-├── src/canvas_host_attach.cpp            # attach_worker/attach_main and display
-├── src/canvas_host_webgl.cpp             # WebGL2 context creation
-├── src/canvas_host_detail.hpp            # Internal implementation declarations
-├── js/attach.ts                          # Attach flow and configuration validation
-├── js/constants.ts                       # Channel names, globals, and runtime constants
-├── js/events.ts                          # DOM input capture and normalization
-├── js/main.ts                            # Public globalThis.CanvasHost API
-├── js/state.ts                           # Instance registry, status, control, cleanup
-├── js/types.ts                           # Runtime interfaces and public contracts
-├── js/utils.ts                           # Globals, validation, arguments, script loading
-├── js/bundle.mjs                         # Concatenates compiled modules
-├── js/tests/                             # Browser runtime tests
-├── js/package.json                       # TypeScript scripts and dev dependency
-├── js/package-lock.json                  # Pinned Node dependency versions
-├── js/tsconfig.json                      # TypeScript compiler settings
-├── examples/jupyterlite/webgl/           # reference example
-├── environment-dev.yml                   # conda-forge host dev environment
-├── .github/workflows/                    # Host CI and GitHub Pages deployment
-├── .clang-format                         # C/C++ formatting rules
-├── tests/
-│   ├── c/                                # Catch2 host tests
-│   └── package/                          # Installed-package consumer test
-└── CMakeLists.txt
-```
+- `VERSION` — single library version source.
+- `include/canvas_host/` — public C17 and C++17 headers.
+- `src/` — implementation and the C ABI adapter.
+- `js/` — TypeScript browser runtime and its Node tests.
+- `cmake/` — runtime build helpers, package configuration, and the generated version-header template.
+- `tests/` — Catch2 host tests and the installed-package consumer check.
+- `examples/jupyterlite/webgl/` — reference notebook and its build tooling.
 
 ## License
 
