@@ -7,6 +7,8 @@
 
 #include <emscripten/html5.h>
 
+#include <ostream>
+
 namespace canvas_host
 {
 

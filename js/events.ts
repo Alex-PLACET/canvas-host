@@ -105,6 +105,7 @@ namespace CanvasHostRuntime {
             if (PREVENT_DEFAULT_KEYS.has(event.key)) {
                 event.preventDefault();
             }
+            event.stopPropagation();
         }, { signal });
 
         const textEvents = [EVENT_KEY_UP, EVENT_KEY_PRESS] as const satisfies readonly string[];
@@ -114,14 +115,12 @@ namespace CanvasHostRuntime {
                 post(type, type === EVENT_KEY_PRESS
                     ? { ...keyData(keyboard), charCode: keyboard.charCode }
                     : keyData(keyboard));
+                event.stopPropagation();
             }, { signal });
         }
 
         canvas.addEventListener(EVENT_FOCUS, () => post(EVENT_FOCUS), { signal });
         canvas.addEventListener(EVENT_BLUR, () => post(EVENT_BLUR), { signal });
         canvas.addEventListener("contextmenu", event => event.preventDefault(), { signal });
-        for (const type of [EVENT_KEY_DOWN, EVENT_KEY_UP, EVENT_KEY_PRESS]) {
-            canvas.addEventListener(type, event => event.stopPropagation(), { signal });
-        }
     }
 }

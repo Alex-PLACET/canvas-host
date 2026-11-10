@@ -52,7 +52,7 @@ Canvas attach_worker(WorkerConfig config)
     data["statusText"] = config.status_text;
 
     display_canvas(config, data);
-    return Canvas(Mode::WorkerOffscreen,
+    return Canvas(Canvas::Mode::WorkerOffscreen,
                   config.canvas_id,
                   config.global_name,
                   config.width,
@@ -114,7 +114,7 @@ Canvas attach_main(MainConfig config)
     data["hidpi"] = true;
 
     display_canvas(config, data);
-    return Canvas(Mode::MainThreadApp,
+    return Canvas(Canvas::Mode::MainThreadApp,
                   config.canvas_id,
                   {},
                   config.width,

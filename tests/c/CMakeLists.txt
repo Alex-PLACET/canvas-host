@@ -1,6 +1,5 @@
 # Host tests for the C ABI, C++ wrapper, package consumer, and browser runtime.
 
-find_package(nlohmann_json CONFIG REQUIRED)
 find_package(Catch2 3 CONFIG REQUIRED)
 
 add_library(canvas_host_test_impl STATIC
@@ -91,7 +90,6 @@ add_test(NAME canvas_host_package_consumer_test
 )
 
 if(CANVAS_HOST_BUILD_JS)
-    find_program(CANVAS_HOST_NODE_EXECUTABLE node)
     if(CANVAS_HOST_NODE_EXECUTABLE)
         add_test(NAME canvas_host_js_runtime_test
             COMMAND ${CANVAS_HOST_NODE_EXECUTABLE} --test

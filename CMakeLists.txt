@@ -107,9 +107,7 @@ set(CANVAS_HOST_INSTALL_TARGETS canvas_host)
 if(CANVAS_HOST_BUILD_C_API)
     # Emscripten does not report shared-library support by default, but xeus
     # exports its main target as SHARED. Allow CMake to import it.
-    if(EMSCRIPTEN)
-        set_property(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
-    endif()
+    set_property(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
     find_package(xeus CONFIG REQUIRED)
 
     # xeus exports --std=c++17 as an interface compile option, which overrides
@@ -148,7 +146,7 @@ if(CANVAS_HOST_BUILD_C_API)
     )
     target_link_libraries(canvas_host_c
         PUBLIC canvas_host
-        PRIVATE nlohmann_json::nlohmann_json xeus
+        PRIVATE xeus
     )
 
     # xeus is built with wasm exceptions. These are link requirements for

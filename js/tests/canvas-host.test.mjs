@@ -17,7 +17,7 @@ class FakeEventTarget {
         if (opts.signal?.aborted) {
             return;
         }
-        const entry = { handler, once: Boolean(opts.once) };
+        const entry = { handler };
         const list = this.listeners.get(type) ?? [];
         list.push(entry);
         this.listeners.set(type, list);
@@ -42,17 +42,10 @@ class FakeEventTarget {
         }
     }
 
-    listenerCount(type) {
-        return (this.listeners.get(type) ?? []).length;
-    }
-
     dispatchEvent(event) {
         event.target ??= this;
         const list = [...(this.listeners.get(event.type) ?? [])];
         for (const entry of list) {
-            if (entry.once) {
-                this.removeEventListener(event.type, entry.handler);
-            }
             entry.handler.call(this, event);
         }
         return event;
@@ -73,7 +66,6 @@ class FakeCanvas extends FakeEventTarget {
         this.focused = false;
         this.captured = new Set();
         this.transferred = false;
-        this.attributes = new Map();
     }
 
     focus() {
@@ -104,24 +96,12 @@ class FakeCanvas extends FakeEventTarget {
         this.transferred = true;
         return { width: 0, height: 0 };
     }
-
-    setAttribute(name, value) {
-        this.attributes.set(name, value);
-    }
 }
 
 class FakeElement {
     constructor() {
         this.style = {};
         this.textContent = "";
-    }
-}
-
-class FakeScript {
-    constructor() {
-        this.src = "";
-        this.onload = null;
-        this.onerror = null;
     }
 }
 
@@ -139,13 +119,7 @@ function statusText(id) {
 }
 
 globalThis.document = {
-    getElementById: id => elements.get(id) ?? null,
-    createElement: tag => tag === "script" ? new FakeScript() : new FakeElement(),
-    head: {
-        appendChild(script) {
-            script.onload?.();
-        }
-    }
+    getElementById: id => elements.get(id) ?? null
 };
 globalThis.devicePixelRatio = 2;
 

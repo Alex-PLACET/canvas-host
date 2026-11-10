@@ -10,13 +10,17 @@
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
+#include <cstddef>
 #include <cstring>
 #include <exception>
+#include <format>
 #include <iterator>
 #include <ranges>
 #include <span>
 #include <stdexcept>
 #include <string>
+#include <string_view>
+#include <utility>
 
 struct canvas_host_canvas
 {

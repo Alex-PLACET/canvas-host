@@ -86,7 +86,7 @@ TEST_CASE("C++ wrapper manages a worker canvas", "[canvas_host]")
     REQUIRE(canvas.poll_event(event));
     REQUIRE(event.value("type", "") == "pointerup");
     REQUIRE_FALSE(canvas.poll_event(event));
-    remove(path.c_str());
+    std::remove(path.c_str());
 
     test_reset();
     canvas.send(canvas_host::nl::json{{"type", "plot"}, {"expr", "x"}});
@@ -125,7 +125,7 @@ TEST_CASE("C++ wrapper manages a worker canvas", "[canvas_host]")
 
     canvas.stop();
     REQUIRE_FALSE(canvas.poll_event(line));
-    remove(path.c_str());
+    std::remove(path.c_str());
     main_canvas.stop();
 
     canvas_host::WorkerConfig special;
@@ -153,7 +153,7 @@ TEST_CASE("C++ wrapper manages a worker canvas", "[canvas_host]")
     REQUIRE(slash_canvas.poll_event(line));
     REQUIRE(line == "{\"type\":\"slash\"}");
     REQUIRE_FALSE(slash_canvas.poll_event(line));
-    remove(slash_path.c_str());
+    std::remove(slash_path.c_str());
     slash_canvas.stop();
 
     const std::string quoted = canvas_host::detail::js_quote("a'b<c");
@@ -270,6 +270,6 @@ TEST_CASE("C++ wrapper rejects malformed event JSON", "[canvas_host]")
 
     canvas_host::nl::json event;
     REQUIRE_THROWS_AS(canvas.poll_event(event), std::runtime_error);
-    remove(path.c_str());
+    std::remove(path.c_str());
     canvas.stop();
 }

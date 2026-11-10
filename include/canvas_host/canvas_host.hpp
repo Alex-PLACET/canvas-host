@@ -42,15 +42,6 @@ inline constexpr const char* default_start_return_type = "number";
 inline constexpr const char* default_app_global = "__canvas_host_app";
 
 /**
- * @brief Canvas hosting mode.
- */
-enum class Mode
-{
-    WorkerOffscreen, /**< Canvas is transferred to the kernel worker as an OffscreenCanvas. */
-    MainThreadApp    /**< Canvas stays on the main thread for a browser application. */
-};
-
-/**
  * @brief Common configuration shared by worker and main-thread canvases.
  */
 struct CanvasConfig
@@ -133,12 +124,6 @@ public:
     Canvas& operator=(const Canvas&) = delete;
     Canvas(Canvas&&) = default;
     Canvas& operator=(Canvas&&) = default;
-
-    /**
-     * @brief Return the canvas hosting mode.
-     * @return The hosting mode.
-     */
-    Mode mode() const;
 
     /**
      * @brief Check whether the canvas is a worker OffscreenCanvas.
@@ -301,6 +286,13 @@ public:
     void stop();
 
 private:
+    /** @brief Canvas hosting mode. */
+    enum class Mode
+    {
+        WorkerOffscreen, /**< Canvas is transferred to the kernel worker as an OffscreenCanvas. */
+        MainThreadApp    /**< Canvas stays on the main thread for a browser application. */
+    };
+
     /**
      * @brief Construct an attached Canvas with explicit state.
      * @param mode Hosting mode.

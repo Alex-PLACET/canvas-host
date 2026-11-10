@@ -10,8 +10,12 @@
 #include <emscripten.h>
 #include <emscripten/html5.h>
 
+#include <cstddef>
+#include <exception>
 #include <format>
 #include <fstream>
+#include <ios>
+#include <ostream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -36,8 +40,6 @@ Canvas::Canvas(Mode mode,
     , m_log_stream(log_stream)
 {
 }
-
-Mode Canvas::mode() const { return m_mode; }
 
 bool Canvas::is_worker() const { return m_mode == Mode::WorkerOffscreen; }
 

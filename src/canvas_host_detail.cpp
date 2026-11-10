@@ -12,10 +12,14 @@
 #include <xeus/xinterpreter.hpp>
 
 #include <algorithm>
+#include <array>
+#include <cstddef>
+#include <format>
 #include <fstream>
-#include <ranges>
+#include <ios>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 
 namespace canvas_host
 {

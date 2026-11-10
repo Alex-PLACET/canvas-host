@@ -5,6 +5,8 @@
 
 #include <xeus/xinterpreter.hpp>
 
+#include <nlohmann/json.hpp>
+
 #include <cstring>
 #include <stdexcept>
 #include <string>

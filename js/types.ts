@@ -78,33 +78,6 @@ namespace CanvasHostRuntime {
         readonly mode: Mode;
     }
 
-    export interface CanvasHostInputEvent {
-        /** Canvas ID. */
-        readonly target: string;
-        /** Event type. */
-        readonly type: string;
-        /** Epoch milliseconds when the DOM event was captured. */
-        readonly eventTime: number;
-        /** Pointer X in CSS pixels. */
-        readonly x: number;
-        /** Pointer Y in CSS pixels. */
-        readonly y: number;
-        /** Pointer X in device pixels. */
-        readonly deviceX: number;
-        /** Pointer Y in device pixels. */
-        readonly deviceY: number;
-        /** Canvas CSS width. */
-        readonly cssWidth: number;
-        /** Canvas CSS height. */
-        readonly cssHeight: number;
-        /** Canvas backing-store width. */
-        readonly pixelWidth: number;
-        /** Canvas backing-store height. */
-        readonly pixelHeight: number;
-        /** Device pixel ratio. */
-        readonly dpr: number;
-    }
-
     export interface ControlMessage {
         readonly type?: string;
         readonly target?: string;
